@@ -1,0 +1,272 @@
+#!/nfs/goldstein/software/R-3.0.1/bin/Rscript
+
+#Set memory for Java
+options(java.parameters = "-Xmx4096m")
+#Load Libraries
+library("optparse")
+library("xlsx")
+
+#Functions
+getScriptPath <- function(){
+    cmd.args <- commandArgs()
+    m <- regexpr("(?<=^--file=).+", cmd.args, perl=TRUE)
+    script.dir <- dirname(regmatches(cmd.args, m))
+    if(length(script.dir) == 0) stop("can't determine script dir: please call the script with Rscript")
+    if(length(script.dir) > 1) stop("can't determine script dir: more than one '--file' argument detected")
+    return(script.dir)
+}
+#Function to return indices of LoF variants in functions list
+ind.LoF <- function(data){
+    LoF_var <- c(
+    "STOP_GAINED",
+    "START_LOST",
+    "SPLICE_SITE_ACCEPTOR",
+    "SPLICE_SITE_DONOR",
+    "FRAME_SHIFT",
+    "EXON_DELETED"
+    )
+    return 
+}
+
+#Function to convert non-trio column names to trio names and perform additional non-trio filtering
+nonTrioToTrio <- function(data){
+    colnames(data)[which(colnames(data) %in% c("Sample.Name"))] <- c("Child")
+    data <- data[which(
+                       (data$subRVIS.Domain.Score <= 40 | 
+                       is.na(data$subRVIS.Domain.Score)) &
+                       (data$Polyphen.Humvar.Score >= .95 |
+                       is.na(data$Polyphen.Humvar.Score))),]
+    data <- data[which(!(data$Function %in% c("synonymous_variant","splice_region_variant"))),]
+    return(data)
+}
+
+##################################################################################################################
+#scriptPath <- getScriptPath()
+scriptPath <- "~/bin/generateVariantReportDragen"
+
+#Source files
+source(file.path(scriptPath,"writeSampleSummaries.R"))
+
+#Opt parse
+option_list = list(
+    make_option(c("-c","--csv"), type="character", default="nonTrio/nonTrio_genotypes.csv", help="Input csv from ATAV output file [default = nonTrio/nonTrio_genotypes.csv]"),
+    make_option(c("-o","--out"), type="character", default="nonTrio_variant_report.xlsx", help="Report output file [default  = nonTrio_variant_report.xlsx]"),
+    make_option(c("-m","--mgi"), type="character", default=paste(scriptPath,"/MGI_essential.txt",sep=""), help="MGI essiential gene list [default  = <Script Path>/MGI_essential.txt]", dest="MGIe"),
+    make_option(c("-s","--summary"), type="logical", default=F, action="store_true", help="Flag to generate individual sample text summaries [default  = False"),
+    make_option(c("-p","--pheno"), type="character", default="NULL", help="seqDB file containing sample phenotypes [default  = NULL]"),
+    make_option(c("-f","--filter"), type="integer", default="5", help="Number of control alleles allowed by the filter [default  = 5]"),
+    make_option(c("--noVEP"), type="logical", default=F, action="store_true", help="Flag to resuse existing VEP output files and skip running VEP [default  = False]"),
+    make_option(c("-n","--nontrio"), type="logical", default=F, action="store_true", help="Flag to process files as a non-trio, imposing additional filters to the tier one rules [default  = False]")
+    )
+    #make_option(c("-r","--raw"), type="character", default="atav_summary.xlsx", help="ATAV raw output summary excel [default = atav_summary.xlsx")
+
+opt_parser = OptionParser(option_list=option_list)
+opt = parse_args(opt_parser)
+
+#read csv file as dataframe for dnm, chet, and add_anno, and MGI essential gene list
+source(paste(scriptPath,"/nonTrio_filters.R",sep=""))
+
+MGIe <- read.table(opt$MGIe,header=T)
+
+#Tier 1 filtering DNM 
+#Merging additional annotations to table
+input.data = read.csv(opt$csv,na.strings="NA")
+input.data <- cbind(input.data, gsub("'","",input.data$Gene.Name) %in% MGIe$Gene_symbol)
+colnames(input.data)[dim(input.data)[2]] <- "MGI.Essential"
+col.id <- grep("Gene.Name",colnames(input.data))
+new.pos <- 3
+input.data <- input.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(input.data))[-(col.id-new.pos+1)])]
+col.id <- grep("Effect",colnames(input.data))
+new.pos <- 4
+input.data <- input.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(input.data))[-(col.id-new.pos+1)])]
+
+#KnownVar
+data <- Filter.by.Allele.Count(input.data,0)
+kv <- Filter.for.tier2.pdnm.kv(data)
+write.csv(kv, file = "kv.csv")
+if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i kv.csv --append_file kv.csv.vep --force_append"),wait=T)}
+kv <- read.csv("kv.csv.vep",na.strings="NA")
+if(dim(kv)[1]>0){kv <- cbind(kv, paste0(kv$Variant.ID,"\nnonTrio\n",kv$HGVSc,"\n",kv$HGVSp,"\n",kv$Samtools.Raw.Coverage,"\n",kv$Percent.Alt.Read,"\n",kv$Genotype.Qual.GQ))
+colnames(kv)[dim(kv)[2]] <- "PGM.Info"}
+data <- Filter.by.Allele.Count(input.data,opt$filter)
+kv5 <- Filter.for.tier2.pdnm.kv(data)
+write.csv(kv5, file = "kv5.csv")
+if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i kv5.csv --append_file kv5.csv.vep --force_append"),wait=T)}
+kv5 <- read.csv("kv5.csv.vep",na.strings="NA")
+if(dim(kv5)[1]>0){kv5 <- cbind(kv5, paste0(kv5$Variant.ID,"\nnonTrio\n",kv5$HGVSc,"\n",kv5$HGVSp,"\n",kv5$Samtools.Raw.Coverage,"\n",kv5$Percent.Alt.Read,"\n",kv5$Genotype.Qual.GQ))
+colnames(kv5)[dim(kv5)[2]] <- "PGM.Info"}
+kv5 <- kv5[which(!(paste(kv5$Sample.Name,kv5$Variant.ID) %in% paste(kv$Sample.Name,kv$Variant.ID))),]
+
+#DNM LoF
+data <- Filter.by.Allele.Count(input.data,opt$filter)
+pdnm <- Filter.for.tier2.pdnm.lof(data)
+write.csv(pdnm, file = "pdnm_lof.csv")
+if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i pdnm_lof.csv --append_file pdnm_lof.csv.vep --force_append"),wait=T)}
+pdnm <- read.csv("pdnm_lof.csv.vep",na.strings="NA")
+if(dim(pdnm)[1]>0){pdnm <- cbind(pdnm, paste0(pdnm$Variant.ID,"\nnonTrio\n",pdnm$HGVSc,"\n",pdnm$HGVSp,"\n",pdnm$Samtools.Raw.Coverage,"\n",pdnm$Percent.Alt.Read,"\n",pdnm$Genotype.Qual.GQ))
+colnames(pdnm)[dim(pdnm)[2]] <- "PGM.Info"}
+
+pchet <- pdnm[which(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep="")) %in% names(table(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep="")))[which(table(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep=""))) > 1)])),]
+pdnm <- pdnm[which(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep="")) %in% names(table(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep="")))[which(table(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep=""))) == 1)])), ]
+
+#DNM LoF Depleted
+data <- Filter.by.Allele.Count(input.data,opt$filter)
+pdnmd <- Filter.for.tier2.pdnm.lof.depl(data)
+write.csv(pdnmd, file = "pdnm_lof_depl.csv")
+if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i pdnm_lof_depl.csv --append_file pdnm_lof_depl.csv.vep --force_append"),wait=T)}
+pdnmd <- read.csv("pdnm_lof_depl.csv.vep",na.strings="NA")
+if(dim(pdnmd)[1]>0){pdnmd <- cbind(pdnmd, paste0(pdnmd$Variant.ID,"\nnonTrio\n",pdnmd$HGVSc,"\n",pdnmd$HGVSp,"\n",pdnmd$Samtools.Raw.Coverage,"\n",pdnmd$Percent.Alt.Read,"\n",pdnmd$Genotype.Qual.GQ))
+colnames(pdnmd)[dim(pdnmd)[2]] <- "PGM.Info"}
+
+#REC KV LoF
+data <- Filter.by.HemiHomo.Count(input.data,0)
+prec <- Filter.for.tier2.prec.kv.lof(data)
+write.csv(prec, file = "prec_kv_lof.csv")
+if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i prec_kv_lof.csv --append_file prec_kv_lof.csv.vep --force_append"),wait=T)}
+prec <- read.csv("prec_kv_lof.csv.vep",na.strings="NA")
+if(dim(prec)[1]>0){prec <- cbind(prec, paste0(prec$Variant.ID,"\nnonTrio\n",prec$HGVSc,"\n",prec$HGVSp,"\n",prec$Samtools.Raw.Coverage,"\n",prec$Percent.Alt.Read,"\n",prec$Genotype.Qual.GQ))
+colnames(prec)[dim(prec)[2]] <- "PGM.Info"}
+
+#Create workbook and sheets
+outwb <- createWorkbook()
+sum.sheet <- createSheet(outwb, sheetName = "Summary")
+    kv.sheet <- createSheet(outwb, sheetName = "pDNM-KV")
+    kv5.sheet <- createSheet(outwb, sheetName = "pDNM-KV5")
+    pdnm.sheet <- createSheet(outwb, sheetName = "pDNM-LoF5")
+    prec.sheet <- createSheet(outwb, sheetName = "pREC-KVLoF")
+    pchet.sheet <- createSheet(outwb, sheetName = "pCHET-KVLoF")
+    pdnmd.sheet <- createSheet(outwb, sheetName = "pDNM-LoFD")
+    addDataFrame(kv, kv.sheet, row.names=F, showNA=F)
+    addDataFrame(kv5, kv5.sheet, row.names=F, showNA=F)
+    addDataFrame(pdnm, pdnm.sheet, row.names=F, showNA=F)
+    addDataFrame(prec, prec.sheet, row.names=F, showNA=F)
+    addDataFrame(pchet, pchet.sheet, row.names=F, showNA=F)
+    addDataFrame(pdnmd, pdnmd.sheet, row.names=F, showNA=F)
+
+#LoFd <- read.table(opt$LoFd,header=T)
+sum = NULL
+LoF_var <- c(
+    "STOP_GAINED",
+    "START_LOST",
+    "SPLICE_SITE_ACCEPTOR",
+    "SPLICE_SITE_DONOR",
+    "FRAME_SHIFT",
+    "EXON_DELETED"
+)
+
+#Create Summary Table
+for(samp in unique(c(as.vector(kv$Sample.Name),as.vector(kv5$Sample.Name),as.vector(pdnm$Sample.Name),as.vector(prec$Sample.Name),as.vector(pchet$Sample.Name),as.vector(pdnmd$Sample.Name)))){
+
+Nkv <- length(which(kv$Sample.Name==samp))
+Nkv5 <- length(which(kv5$Sample.Name==samp))
+Npdnm <- length(which(pdnm$Sample.Name==samp))
+Nprec <- length(which(prec$Sample.Name==samp))
+Npchet <- length(which(pchet$Sample.Name==samp))
+Npdnmd <- length(which(pdnmd$Sample.Name==samp))
+
+samp.kv <- kv[which(kv$Sample.Name==samp),]
+samp.kv5 <- kv5[which(kv5$Sample.Name==samp),]
+samp.pdnm <- pdnm[which(pdnm$Sample.Name==samp),]
+samp.prec <- prec[which(prec$Sample.Name==samp),]
+samp.pchet <- pchet[which(pchet$Sample.Name==samp),]
+samp.pdnmd <- pdnmd[which(pdnmd$Sample.Name==samp),]
+samp.kv.genes <- kv[which(kv$Sample.Name==samp),]$Gene.Name
+samp.kv5.genes <- kv5[which(kv5$Sample.Name==samp),]$Gene.Name
+samp.pdnm.genes <- pdnm[which(pdnm$Sample.Name==samp),]$Gene.Name
+samp.prec.genes <- prec[which(prec$Sample.Name==samp),]$Gene.Name
+samp.pchet.genes <- pchet[which(pchet$Sample.Name==samp),]$Gene.Name
+samp.pdnmd.genes <- pdnmd[which(pdnmd$Sample.Name==samp),]$Gene.Name
+if(opt$summary){writeNonTrioSummary(samp.kv,samp.kv5,samp.pdnm,samp.prec,samp.pchet,samp.pdnmd,dirname(opt$out))}
+
+sum <- rbind(sum,c(samp,Nkv,Nkv5,Npdnm,Nprec,Npchet,Npdnmd,paste(gsub("'","",samp.kv.genes),collapse="\n"),paste(gsub("'","",samp.kv5.genes),collapse="\n"),paste(gsub("'","",samp.pdnm.genes),collapse="\n"),paste(gsub("'","",samp.prec.genes),collapse="\n"),paste(gsub("'","",samp.pchet.genes),collapse="\n"),paste(gsub("'","",samp.pdnmd.genes),collapse="\n"),""))
+}
+
+#Add in samples with no tier1/2 variants
+samps <- unique(input.data$Sample.Name)
+for(samp in samps[!samps %in% sum[,1]]){
+    sum <- rbind(sum,c(samp,"0","0","0","0","0","0","","","","","","",""))
+}
+sum <- sum[order(gsub(".*(f[0-9]*)","\\1",sum[,1])),]
+if(is.null(dim(sum))){sum <- t(as.matrix(sum))}
+
+if(opt$pheno != "NULL"){
+    pheno <- read.csv(opt$pheno)
+    for(i in 1:dim(sum)[1]){
+        samp <- sum[i,1]
+        sampPheno <- pheno[which(pheno$CHGVID == samp),]$DetailedPhenotype
+        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype}
+        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$Phenotype}
+        sum[i,14] <- as.vector(sampPheno)
+    }
+}
+#Write Excel file
+
+sum <- rbind(c("diagseq","pDNM KV",paste0("pDNM KV",opt$filter),"T2 pDNM LoF","T2 pRec LoF","T2 pCHET LoF","pDNM LoFd","pDNM KnownVar",paste0("pDNM KnownVar (<",opt$filter," Alleles)"),"Tier 2 pDNM LoF","Tier 2 pRec LoF","Tier 2 pCHET LoF","Tier 2 pDNM LoF Depleted","Phenotype"),sum)
+
+cellBlock <- CellBlock(sum.sheet,1,1,dim(sum)[1],dim(sum)[2])
+colnames_style <- CellStyle(outwb) + Font(outwb,isBold=T) + Alignment(horizontal="ALIGN_CENTER",vertical="VERTICAL_CENTER")
+csWrap <- CellStyle(outwb) + Alignment(horizontal="ALIGN_CENTER",vertical="VERTICAL_CENTER",wrapText=T)
+csCenter <- CellStyle(outwb) + Alignment(horizontal="ALIGN_CENTER",vertical="VERTICAL_CENTER")
+colList <- rep(list(csWrap),dim(sum)[2])
+names(colList) <- seq(1,dim(sum)[2])
+
+colList[dim(sum)[2]] <- list(csWrap )
+addDataFrame(sum, sum.sheet, col.names=F, row.names=F,colnamesStyle = colnames_style,colStyle=colList)
+border <- Border(color="black", position=c("TOP","BOTTOM","LEFT","RIGHT"),pen=c("BORDER_THIN","BORDER_THIN","BORDER_THIN","BORDER_THIN"))
+CB.setBorder(cellBlock,border,sort(c(rep(1:(dim(sum)[1]),dim(sum)[2]))),c(rep(1:dim(sum)[2],(dim(sum)[1]))))
+colname_border <- Border(color="black",position="BOTTOM",pen="BORDER_THICK")
+CB.setBorder(cellBlock,colname_border,1,1:dim(sum)[2])
+
+setRowHeight(getRows(sum.sheet,1),1,multiplier=3)
+for(col in c(1)){
+    setColumnWidth(sum.sheet,col,14)
+}
+setColumnWidth(sum.sheet,14,24)
+for(col in c(9:13)){
+    setColumnWidth(sum.sheet,col,11)
+}
+for(col in c(2:7)){
+    setColumnWidth(sum.sheet,col,6)
+}
+redFill <- Fill(foregroundColor = "red", backgroundColor = "red")
+
+for(col in c(8:13)){
+    ind <- which(sum[,col] != "")
+    if(length(ind) > 0){CB.setFill(cellBlock, redFill, ind, col)}
+}
+#ind <- which(sum[,8] != "")
+#CB.setFill(cellBlock, redFill, ind, 8)
+grayFill <- Fill(foregroundColor = "gray")
+CB.setFill(cellBlock, grayFill, 1,8:dim(sum)[2])
+smallFont <- Font(outwb,heightInPoints=10)
+CB.setFont(cellBlock, smallFont, 2:dim(sum)[1],14)
+CB.setFont(cellBlock, smallFont, 1, 2:7)
+
+excelColumn<- function(num){
+    name <- "" 
+    while(num > 0){
+        m <- (num - 1) %% 26
+        name <- paste(LETTERS[m+1],name,sep="")
+        num <- floor((num-m)/26)
+    }
+    return(name) 
+}
+
+addAutoFilter(sum.sheet,paste0("A:",excelColumn(dim(sum)[2])))
+addAutoFilter(kv.sheet,paste0("A:",excelColumn(dim(kv)[2])))
+addAutoFilter(pdnm.sheet,paste0("A:",excelColumn(dim(pdnm)[2])))
+addAutoFilter(prec.sheet,paste0("A:",excelColumn(dim(prec)[2])))
+
+createFreezePane(sum.sheet,2,5)
+createFreezePane(kv.sheet,2,5)
+createFreezePane(pdnm.sheet,2,5)
+createFreezePane(prec.sheet,2,6)
+
+saveWorkbook(outwb, opt$out)
+closeAllConnections()
+
+
+
+
+
+
