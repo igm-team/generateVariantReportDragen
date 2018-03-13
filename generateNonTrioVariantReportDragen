@@ -51,6 +51,7 @@ source(file.path(scriptPath,"writeSampleSummaries.R"))
 option_list = list(
     make_option(c("-c","--csv"), type="character", default="nonTrio/nonTrio_genotypes.csv", help="Input csv from ATAV output file [default = nonTrio/nonTrio_genotypes.csv]"),
     make_option(c("-o","--out"), type="character", default="nonTrio_variant_report.xlsx", help="Report output file [default  = nonTrio_variant_report.xlsx]"),
+    make_option(c("--pt"), type="character", default="nonTrioParent/nonTrioParent_genotypes.csv", help="Parent genotypes ATAV output file [default = nonTrioParent/nonTrioParent_genotypes.csv]"),
     make_option(c("-m","--mgi"), type="character", default=paste(scriptPath,"/MGI_essential.txt",sep=""), help="MGI essiential gene list [default  = <Script Path>/MGI_essential.txt]", dest="MGIe"),
     make_option(c("-s","--summary"), type="logical", default=F, action="store_true", help="Flag to generate individual sample text summaries [default  = False"),
     make_option(c("-p","--pheno"), type="character", default="NULL", help="seqDB file containing sample phenotypes [default  = NULL]"),
@@ -86,14 +87,14 @@ kv <- Filter.for.tier2.pdnm.kv(data)
 write.csv(kv, file = "kv.csv")
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i kv.csv --append_file kv.csv.vep --force_append"),wait=T)}
 kv <- read.csv("kv.csv.vep",na.strings="NA")
-if(dim(kv)[1]>0){kv <- cbind(kv, paste0(kv$Variant.ID,"\nnonTrio\n",kv$HGVSc,"\n",kv$HGVSp,"\n",kv$Samtools.Raw.Coverage,"\n",kv$Percent.Alt.Read,"\n",kv$Genotype.Qual.GQ))
+if(dim(kv)[1]>0){kv <- cbind(kv, paste0(kv$Variant.ID,"\nnonTrio\n",kv$HGVSc,"\n",kv$HGVSp,"\n",kv$DP,"\n",kv$Percent.Alt.Read,"\n",kv$GQ))
 colnames(kv)[dim(kv)[2]] <- "PGM.Info"}
 data <- Filter.by.Allele.Count(input.data,opt$filter)
 kv5 <- Filter.for.tier2.pdnm.kv(data)
 write.csv(kv5, file = "kv5.csv")
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i kv5.csv --append_file kv5.csv.vep --force_append"),wait=T)}
 kv5 <- read.csv("kv5.csv.vep",na.strings="NA")
-if(dim(kv5)[1]>0){kv5 <- cbind(kv5, paste0(kv5$Variant.ID,"\nnonTrio\n",kv5$HGVSc,"\n",kv5$HGVSp,"\n",kv5$Samtools.Raw.Coverage,"\n",kv5$Percent.Alt.Read,"\n",kv5$Genotype.Qual.GQ))
+if(dim(kv5)[1]>0){kv5 <- cbind(kv5, paste0(kv5$Variant.ID,"\nnonTrio\n",kv5$HGVSc,"\n",kv5$HGVSp,"\n",kv5$DP,"\n",kv5$Percent.Alt.Read,"\n",kv5$GQ))
 colnames(kv5)[dim(kv5)[2]] <- "PGM.Info"}
 kv5 <- kv5[which(!(paste(kv5$Sample.Name,kv5$Variant.ID) %in% paste(kv$Sample.Name,kv$Variant.ID))),]
 
@@ -103,7 +104,7 @@ pdnm <- Filter.for.tier2.pdnm.lof(data)
 write.csv(pdnm, file = "pdnm_lof.csv")
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i pdnm_lof.csv --append_file pdnm_lof.csv.vep --force_append"),wait=T)}
 pdnm <- read.csv("pdnm_lof.csv.vep",na.strings="NA")
-if(dim(pdnm)[1]>0){pdnm <- cbind(pdnm, paste0(pdnm$Variant.ID,"\nnonTrio\n",pdnm$HGVSc,"\n",pdnm$HGVSp,"\n",pdnm$Samtools.Raw.Coverage,"\n",pdnm$Percent.Alt.Read,"\n",pdnm$Genotype.Qual.GQ))
+if(dim(pdnm)[1]>0){pdnm <- cbind(pdnm, paste0(pdnm$Variant.ID,"\nnonTrio\n",pdnm$HGVSc,"\n",pdnm$HGVSp,"\n",pdnm$DP,"\n",pdnm$Percent.Alt.Read,"\n",pdnm$GQ))
 colnames(pdnm)[dim(pdnm)[2]] <- "PGM.Info"}
 
 pchet <- pdnm[which(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep="")) %in% names(table(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep="")))[which(table(do.call(paste,c(pdnm[c("Sample.Name","Gene.Name")],sep=""))) > 1)])),]
@@ -115,7 +116,7 @@ pdnmd <- Filter.for.tier2.pdnm.lof.depl(data)
 write.csv(pdnmd, file = "pdnm_lof_depl.csv")
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i pdnm_lof_depl.csv --append_file pdnm_lof_depl.csv.vep --force_append"),wait=T)}
 pdnmd <- read.csv("pdnm_lof_depl.csv.vep",na.strings="NA")
-if(dim(pdnmd)[1]>0){pdnmd <- cbind(pdnmd, paste0(pdnmd$Variant.ID,"\nnonTrio\n",pdnmd$HGVSc,"\n",pdnmd$HGVSp,"\n",pdnmd$Samtools.Raw.Coverage,"\n",pdnmd$Percent.Alt.Read,"\n",pdnmd$Genotype.Qual.GQ))
+if(dim(pdnmd)[1]>0){pdnmd <- cbind(pdnmd, paste0(pdnmd$Variant.ID,"\nnonTrio\n",pdnmd$HGVSc,"\n",pdnmd$HGVSp,"\n",pdnmd$DP,"\n",pdnmd$Percent.Alt.Read,"\n",pdnmd$GQ))
 colnames(pdnmd)[dim(pdnmd)[2]] <- "PGM.Info"}
 
 #REC KV LoF
@@ -124,8 +125,32 @@ prec <- Filter.for.tier2.prec.kv.lof(data)
 write.csv(prec, file = "prec_kv_lof.csv")
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i prec_kv_lof.csv --append_file prec_kv_lof.csv.vep --force_append"),wait=T)}
 prec <- read.csv("prec_kv_lof.csv.vep",na.strings="NA")
-if(dim(prec)[1]>0){prec <- cbind(prec, paste0(prec$Variant.ID,"\nnonTrio\n",prec$HGVSc,"\n",prec$HGVSp,"\n",prec$Samtools.Raw.Coverage,"\n",prec$Percent.Alt.Read,"\n",prec$Genotype.Qual.GQ))
+if(dim(prec)[1]>0){prec <- cbind(prec, paste0(prec$Variant.ID,"\nnonTrio\n",prec$HGVSc,"\n",prec$HGVSp,"\n",prec$DP,"\n",prec$Percent.Alt.Read,"\n",prec$GQ))
 colnames(prec)[dim(prec)[2]] <- "PGM.Info"}
+
+#Add parent sheet 
+#Merging additional annotations to table
+#if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$pt," --append_file ",opt$pt, ".vep --force_append"),wait=T)}
+pt.data <- kv[FALSE,]
+if(file.exists(opt$pt)){pt.data = read.csv(paste0(opt$pt),na.strings="NA")}
+if(dim(pt.data)[1] > 0){
+    pt.data <- cbind(pt.data, paste0(pt.data$Variant.ID,"\nnonTrio\n",pt.data$HGVSc,"\n",pt.data$HGVSp,"\n",pt.data$DP,"\n",pt.data$Percent.Alt.Read,"\n",pt.data$GQ))
+    colnames(pt.data)[dim(pt.data)[2]] <- "PGM.Info"
+    col.id <- grep("Sample.Name",colnames(pt.data))
+    new.pos <- 1
+    pt.data <- pt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(pt.data))[-(col.id-new.pos+1)])]
+    col.id <- grep("Gene.Name",colnames(pt.data))
+    new.pos <- 3
+    pt.data <- pt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(pt.data))[-(col.id-new.pos+1)])]
+    col.id <- grep("Effect",colnames(pt.data))
+    new.pos <- 4
+    pt.data <- pt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(pt.data))[-(col.id-new.pos+1)])]
+}
+
+data <- Filter.by.Allele.Count(pt.data,5)
+pt <- Filter.for.tier2.pdnm.kv(data)
+data <- Filter.by.Allele.Count(pt.data,5)
+pt <- rbind(pt,Filter.for.tier2.pdnm.lof(data))
 
 #Create workbook and sheets
 outwb <- createWorkbook()
@@ -136,12 +161,21 @@ sum.sheet <- createSheet(outwb, sheetName = "Summary")
     prec.sheet <- createSheet(outwb, sheetName = "pREC-KVLoF")
     pchet.sheet <- createSheet(outwb, sheetName = "pCHET-KVLoF")
     pdnmd.sheet <- createSheet(outwb, sheetName = "pDNM-LoFD")
+    pt.sheet <- createSheet(outwb, sheetName = "Parent")
+    kvCellBlock <- CellBlock(kv.sheet,1,1,dim(kv)[1]+1,dim(kv)[2])
+    kv5CellBlock <- CellBlock(kv5.sheet,1,1,dim(kv5)[1]+1,dim(kv5)[2]) 
+    pdnmCellBlock <- CellBlock(pdnm.sheet,1,1,dim(pdnm)[1]+1,dim(pdnm)[2])
+    precCellBlock <- CellBlock(prec.sheet,1,1,dim(prec)[1]+1,dim(prec)[2])
+    pchetCellBlock <- CellBlock(pchet.sheet,1,1,dim(pchet)[1]+1,dim(pchet)[2])
+    pdnmdCellBlock <- CellBlock(pdnmd.sheet,1,1,dim(pdnmd)[1]+1,dim(pdnmd)[2])
+    ptCellBlock <- CellBlock(pt.sheet,1,1,dim(pt)[1]+1,dim(pt)[2])
     addDataFrame(kv, kv.sheet, row.names=F, showNA=F)
     addDataFrame(kv5, kv5.sheet, row.names=F, showNA=F)
     addDataFrame(pdnm, pdnm.sheet, row.names=F, showNA=F)
     addDataFrame(prec, prec.sheet, row.names=F, showNA=F)
     addDataFrame(pchet, pchet.sheet, row.names=F, showNA=F)
     addDataFrame(pdnmd, pdnmd.sheet, row.names=F, showNA=F)
+    addDataFrame(pt, pt.sheet, row.names=F, showNA=F)
 
 #LoFd <- read.table(opt$LoFd,header=T)
 sum = NULL
@@ -153,6 +187,64 @@ LoF_var <- c(
     "FRAME_SHIFT",
     "EXON_DELETED"
 )
+
+highlightCCDSx <- function(data, myCellBlock, is.comphet = F){
+    yellowFill <- Fill(foregroundColor = "yellow", backgroundColor = "yellow")
+    if(!is.comphet){
+        vidCol <- which(colnames(data) == "Variant.ID")
+        ind <- sapply(grep("0", data$X.Transcripts), function(x)x+1)
+        col <- grep("X.Transcripts",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(sapply(data$Exon, function(x) eval(parse(text=as.vector(x)))) == 1), function(x)x+1)
+        col <- which(colnames(data) == "Exon")
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(data$ExAC.Sample.Covered.10x < 10000), function(x)x+1)
+        col <- grep("ExAC.Sample.Covered.10x",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(data$Het.Binomial.P..child. < 0.05), function(x)x+1)
+        col <- grep("Percent.Alt.Read.Binomial.P",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+    }else{
+        vidCol1 <- grep("Variant.ID.1",colnames(data))
+        vidCol2 <- grep("Variant.ID.2",colnames(data))
+        ind <- sapply(grep("0", data$X.Transcripts.1), function(x)x+1)
+        col <- grep("X.Transcripts.1",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol1)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(grep("0", data$X.Transcripts.2), function(x)x+1)
+        col <- grep("X.Transcripts.2",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol2)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(sapply(data$Exon.1, function(x) eval(parse(text=as.vector(x)))) == 1), function(x)x+1)
+        col <- which(colnames(data) == "Exon.1")
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol1)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(sapply(data$Exon.2, function(x) eval(parse(text=as.vector(x)))) == 1), function(x)x+1)
+        col <- which(colnames(data) == "Exon.2")
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol2)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(data$ExAC.Sample.Covered.10x.1 < 10000), function(x)x+1)
+        col <- grep("ExAC.Sample.Covered.10x.1",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol1)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(data$ExAC.Sample.Covered.10x.2 < 10000), function(x)x+1)
+        col <- grep("ExAC.Sample.Covered.10x.2",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol2)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(data$Het.Binomial.P..child..1 < 0.05), function(x)x+1)
+        col <- grep("Het.Binomial.P..child..1",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol1)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+        ind <- sapply(which(data$Het.Binomial.P..child..2 < 0.05), function(x)x+1)
+        col <- grep("Het.Binomial.P..child..2",colnames(data))
+        if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol2)
+                            CB.setFill(myCellBlock, yellowFill, ind, col)}
+    }
+}
 
 #Create Summary Table
 for(samp in unique(c(as.vector(kv$Sample.Name),as.vector(kv5$Sample.Name),as.vector(pdnm$Sample.Name),as.vector(prec$Sample.Name),as.vector(pchet$Sample.Name),as.vector(pdnmd$Sample.Name)))){
@@ -193,9 +285,8 @@ if(opt$pheno != "NULL"){
     pheno <- read.csv(opt$pheno)
     for(i in 1:dim(sum)[1]){
         samp <- sum[i,1]
-        sampPheno <- pheno[which(pheno$CHGVID == samp),]$DetailedPhenotype
-        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype}
-        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$Phenotype}
+        sampPheno <- pheno[which(pheno$CHGVID == samp),]$DetailedPhenotype[1]
+        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype[1]}
         sum[i,14] <- as.vector(sampPheno)
     }
 }
@@ -259,8 +350,17 @@ addAutoFilter(prec.sheet,paste0("A:",excelColumn(dim(prec)[2])))
 
 createFreezePane(sum.sheet,2,5)
 createFreezePane(kv.sheet,2,5)
+highlightCCDSx(kv,kvCellBlock)
+createFreezePane(kv5.sheet,2,5)
+highlightCCDSx(kv5,kv5CellBlock)
 createFreezePane(pdnm.sheet,2,5)
+highlightCCDSx(pdnm,pdnmCellBlock)
 createFreezePane(prec.sheet,2,6)
+highlightCCDSx(prec,precCellBlock)
+createFreezePane(pdnmd.sheet,2,5)
+highlightCCDSx(pdnmd,pdnmdCellBlock)
+createFreezePane(pt.sheet,2,5)
+
 
 saveWorkbook(outwb, opt$out)
 closeAllConnections()
