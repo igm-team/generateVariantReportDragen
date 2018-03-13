@@ -209,6 +209,7 @@ Filter.for.tier2.pdnm.kv <- function(data) {
   #Exclusion rule 5:
   Functional  <-Filter.by.Effect.exclude(sapply(data[normalized.name("Effect")], as.character))
   data <- data[Functional,]
+  if (dim(data)[1] ==0) { return(data)}
 
   #inclusion rule 1:
   R1 <- sapply(data[normalized.name("HGMD Class")], as.character)
@@ -266,7 +267,7 @@ Filter.for.tier2.pdnm.lof <- function(data) {
   #Exclusion rule 2:
   Functional  <-fun.include(sapply(data[normalized.name("Effect")], as.character))
   data <- data[Functional,]
-
+  if (dim(data)[1] ==0) { return(data)}
 
   #inclusion rule 1:
   R1 <- sapply(data[normalized.name("HGMD Class")], as.character)
@@ -335,6 +336,7 @@ Filter.for.tier2.pdnm.lof.depl <- function(data) {
   #Exclusion rule 2:
   Functional  <-fun.include(sapply(data[normalized.name("Effect")], as.character))
   data <- data[Functional,]
+  if (dim(data)[1] ==0) { return(data)}
 
   data <- data[which(data$LoF.FDR.ExAC. < 0.01 | data$LoF.pLI.ExAC. >= 0.9 | data$LoF.pRec.ExAC. >= 0.9),]
   data
@@ -467,6 +469,7 @@ Filter.for.tier2.prec.kv.lof <- function(data) {
   #rule 2:
   Functional  <-fun.include(sapply(data[normalized.name("Effect")], as.character))
   data <- data[Functional,]
+  if (dim(data)[1] ==0) { return(data)}
 
 
   #inclusion rule 1:
