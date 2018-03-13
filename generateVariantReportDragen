@@ -49,7 +49,7 @@ highlightCCDSx <- function(data, myCellBlock, is.comphet = F){
         if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol)
                             CB.setFill(myCellBlock, yellowFill, ind, col)}
         ind <- sapply(which(data$Het.Binomial.P..child. < 0.05), function(x)x+1)
-        col <- grep("Het.Binomial.P..child.",colnames(data))
+        col <- grep("Percent.Alt.Read.Binomial.P",colnames(data))
         if(length(ind) > 0){CB.setFill(myCellBlock, yellowFill, ind, vidCol)
                             CB.setFill(myCellBlock, yellowFill, ind, col)}
     }else{
@@ -194,12 +194,14 @@ option_list = list(
 make_option(c("-c","--cmphet"), type="character", default="trio/trio_comphet.csv", help="Compound Heterozygous ATAV output file [default = trio/trio_comphet.csv]"),
 make_option(c("-d","--dnm"), type="character", default="trio/trio_denovoandhom.csv", help="Denovo Mutation ATAV output file [default = trio/trio_denovoandhom.csv]"),
 make_option(c("-t","--tnt"), type="character", default="trioNonTrio/trioNonTrio_genotypes.csv", help="trioNonTrio ATAV output file [default = trioNonTrio/trioNonTrio_genotypes.csv]"),
+make_option(c("--pt"), type="character", default="parent/parent_genotypes.csv", help="Parent genotypes ATAV output file [default = parent/parent_genotypes.csv]"),
 make_option(c("--ptm"), type="character", default="ptlMcsm/ptlMcsm_parental.mosaic.csv", help="Parental mosaic ATAV output file [default = ptlMcsm/ptlMcsm_parental.mosaic.csv]"),
 make_option(c("-o","--out"), type="character", default="variant_report.xlsx", help="Report output file [default  = variant_report.xlsx]"),
 make_option(c("-m","--mgi"), type="character", default=paste(scriptPath,"/MGI_essential.txt",sep=""), help="MGI essiential gene list [default  = <Script Path>/MGI_essential.txt]", dest="MGIe"),
 make_option(c("-s","--summary"), type="logical", default=F, action="store_true", help="Flag to generate individual sample text summaries [default  = False"),
 make_option(c("-p","--pheno"), type="character", default="NULL", help="seqDB file containing sample phenotypes [default  = NULL]"),
 make_option(c("--nochet"), type="logical", default=F, action="store_true", help="Flag to process files as a non-trio, imposing additional filters to the tier one rules [default  = False]"),
+make_option(c("--noIGV"), type="logical", default=F, action="store_true", help="Flag to resuse existing IGV batch script files and skip generating [default  = False]"),
 make_option(c("--noVEP"), type="logical", default=F, action="store_true", help="Flag to resuse existing VEP output files and skip running VEP [default  = False]"),
 make_option(c("-n","--nontrio"), type="logical", default=F, action="store_true", help="Flag to process files as a non-trio, imposing additional filters to the tier one rules [default  = False]")
 )
@@ -221,7 +223,7 @@ dnm.data <- cbind(dnm.data, gsub("'","",dnm.data$Gene.Name) %in% MGIe$Gene_symbo
 colnames(dnm.data)[dim(dnm.data)[2]] <- "MGI.Essential"
 dnm.data <- merge(dnm.data, ctrl_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
 dnm.data <- merge(dnm.data, case_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
-dnm.data <- cbind(dnm.data, paste0(dnm.data$Variant.ID,"\n",dnm.data$Denovo.Flag,"\n",dnm.data$HGVSc,"\n",dnm.data$HGVSp,"\n",dnm.data$DP.bin,"\n",dnm.data$Percent.Alt.Read,"\n",dnm.data$GQ))
+dnm.data <- cbind(dnm.data, paste0(dnm.data$Variant.ID,"\n",dnm.data$Denovo.Flag,"\n",dnm.data$HGVSc,"\n",dnm.data$HGVSp,"\n",dnm.data$DP,"\n",dnm.data$Percent.Alt.Read,"\n",dnm.data$GQ))
 colnames(dnm.data)[dim(dnm.data)[2]] <- "PGM.Info"
 col.id <- grep("Sample.Name",colnames(dnm.data))
 new.pos <- 2
@@ -252,7 +254,7 @@ if(!opt$nontrio){
 IGV_dir = file.path(dirname(opt$out),"IGV")
 dir.create(IGV_dir,showWarnings=F)
 write.table(gsub("'","",as.matrix(dnm[,c("Family.ID","Sample.Name","Mother","Father","Denovo.Flag","Variant.ID","Gene.Name")])),file=file.path(IGV_dir,"dnm.IGV.txt"),quote=F,row.names=F,sep="\t")
-system(paste0(scriptPath,"/makeIGVbatch.sh ",file.path(IGV_dir,"dnm.IGV.txt")," 2>",file.path(IGV_dir,"dnm.IGV.log")),wait=F)
+if(!opt$noVEP){system(paste0(scriptPath,"/makeIGVbatch_dragen.sh ",file.path(IGV_dir,"dnm.IGV.txt")," 2>&1 >",file.path(IGV_dir,"dnm.IGV.log")),ignore.stderr=T,wait=F)}
 }
 write.csv(dnm[,!names(dnm) %in% c("PGM.Info")], file = "denovo.csv")
 
@@ -288,6 +290,7 @@ hom <- cbind(hom, HGVSg(hom))
 write.csv(hom[,!names(hom) %in% c("PGM.Info")], file = "homozygous.csv")
 write.csv(tier2[,!names(tier2) %in% c("PGM.Info")], file = "tier2.csv")
 
+browser()
 if(opt$nontrio | opt$nochet){
     chet<-dnm.data[which(dnm.data$Genotype == "empty"),]
     tier2.chet<-dnm.data[which(dnm.data$Genotype == "empty"),]
@@ -299,9 +302,9 @@ chet.data <- cbind(chet.data, gsub("'","",chet.data$Gene.Name...1.) %in% MGIe$Ge
 colnames(chet.data)[dim(chet.data)[2]] <- "MGI.Essential"
 chet.data <- merge(chet.data, ctrl_counts, by.x = "Gene.Name...1.", by.y = "Gene", all.x = T)
 chet.data <- merge(chet.data, case_counts, by.x = "Gene.Name...1.", by.y = "Gene", all.x = T)
-chet.data <- cbind(chet.data, paste0(chet.data$Variant.ID...1.,"\n",chet.data$Comp.Het.Flag,"\n",chet.data$HGVSc...1.,"\n",chet.data$HGVSp...1.,"\n",chet.data$DP.bin...1.,"\n",chet.data$Percent.Alt.Read...1.,"\n",chet.data$GQ...1.)) #,chet.data$GQ...1.))
+chet.data <- cbind(chet.data, paste0(chet.data$Variant.ID...1.,"\n",chet.data$Comp.Het.Flag,"\n",chet.data$HGVSc...1.,"\n",chet.data$HGVSp...1.,"\n",chet.data$DP...1.,"\n",chet.data$Percent.Alt.Read...1.,"\n",chet.data$GQ...1.)) #,chet.data$GQ...1.))
 colnames(chet.data)[dim(chet.data)[2]] <- "PGM.Info.1"
-chet.data <- cbind(chet.data, paste0(chet.data$Variant.ID...2.,"\n",chet.data$Comp.Het.Flag,"\n",chet.data$HGVSc...2.,"\n",chet.data$HGVSp...2.,"\n",chet.data$DP.bin...2.,"\n",chet.data$Percent.Alt.Read...2.,"\n",chet.data$GQ...2.)) #,chet.data$GQ...2.))
+chet.data <- cbind(chet.data, paste0(chet.data$Variant.ID...2.,"\n",chet.data$Comp.Het.Flag,"\n",chet.data$HGVSc...2.,"\n",chet.data$HGVSp...2.,"\n",chet.data$DP...2.,"\n",chet.data$Percent.Alt.Read...2.,"\n",chet.data$GQ...2.)) #,chet.data$GQ...2.))
 colnames(chet.data)[dim(chet.data)[2]] <- "PGM.Info.2"
 col.id <- grep("Sample.Name...1.",colnames(chet.data))
 new.pos <- 2
@@ -390,6 +393,29 @@ t2lof <- Filter.for.tier2.pdnm.lof(data)
 write.csv(kv,file = "kvTNT.csv")
 write.csv(t2lof, file = "t2lof.csv")
 
+#Add trioNonTrio sheet 
+#Merging additional annotations to table
+#if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$pt," --append_file ",opt$pt, ".vep --force_append"),wait=T)}
+pt.data = read.csv(paste0(opt$pt),na.strings="NA")
+if(dim(pt.data)[1] > 0){
+    pt.data <- cbind(pt.data, paste0(pt.data$Variant.ID,"\nnonTrio\n",pt.data$HGVSc,"\n",pt.data$HGVSp,"\n",pt.data$DP,"\n",pt.data$Percent.Alt.Read,"\n",pt.data$GQ))
+    colnames(pt.data)[dim(pt.data)[2]] <- "PGM.Info"
+    col.id <- grep("Sample.Name",colnames(pt.data))
+    new.pos <- 1
+    pt.data <- pt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(pt.data))[-(col.id-new.pos+1)])]
+    col.id <- grep("Gene.Name",colnames(pt.data))
+    new.pos <- 3
+    pt.data <- pt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(pt.data))[-(col.id-new.pos+1)])]
+    col.id <- grep("Effect",colnames(pt.data))
+    new.pos <- 4
+    pt.data <- pt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(pt.data))[-(col.id-new.pos+1)])]
+}
+
+data <- Filter.by.Allele.Count(pt.data,5)
+pt <- Filter.for.tier2.pdnm.kv(data)
+data <- Filter.by.Allele.Count(pt.data,5)
+pt <- rbind(pt,Filter.for.tier2.pdnm.lof(data))
+
 #Create workbook and sheets
 outwb <- createWorkbook()
 sum.sheet <- createSheet(outwb, sheetName = "Summary")
@@ -403,6 +429,7 @@ if(!opt$nontrio){
     kv.sheet <- createSheet(outwb, sheetName = "TNT KV")
     t2lof.sheet <- createSheet(outwb, sheetName = "TNT LoF")
     ptm.sheet <- createSheet(outwb, sheetName = "Ptl MSC")
+    pt.sheet <- createSheet(outwb, sheetName = "Parent")
     dnmCellBlock <- CellBlock(dnm.sheet,1,1,dim(dnm)[1]+1,dim(dnm)[2])
     hemCellBlock <- CellBlock(hem.sheet,1,1,dim(hem)[1]+1,dim(hem)[2])
     homCellBlock <- CellBlock(hom.sheet,1,1,dim(hom)[1]+1,dim(hom)[2])
@@ -412,6 +439,7 @@ if(!opt$nontrio){
     kvCellBlock <- CellBlock(kv.sheet,1,1,dim(kv)[1]+1,dim(kv)[2])
     t2lofCellBlock <- CellBlock(t2lof.sheet,1,1,dim(t2lof)[1]+1,dim(t2lof)[2])
     ptmCellBlock <- CellBlock(ptm.sheet,1,1,dim(ptm)[1]+1,dim(ptm)[2])
+    ptCellBlock <- CellBlock(pt.sheet,1,1,dim(pt)[1]+1,dim(pt)[2])
     addDataFrame(dnm, dnm.sheet, row.names=F, showNA=F)
     addDataFrame(hem, hem.sheet, row.names=F, showNA=F)
     addDataFrame(hom, hom.sheet, row.names=F, showNA=F)
@@ -421,6 +449,7 @@ if(!opt$nontrio){
     addDataFrame(kv, kv.sheet, row.names=F, showNA=F)
     addDataFrame(t2lof, t2lof.sheet, row.names=F, showNA=F)
     addDataFrame(ptm, ptm.sheet, row.names=F, showNA=F)
+    addDataFrame(pt, pt.sheet, row.names=F, showNA=F)
 }else{
     dnm.sheet <- createSheet(outwb, sheetName = "pDNM")
     hem.sheet <- createSheet(outwb, sheetName = "pHEM")
@@ -473,7 +502,10 @@ samp.t2lof.genes <- unique(c(as.vector(t2lof[which(t2lof$Sample.Name==samp),]$Ge
 samp.ptm.genes <- unique(c(as.vector(ptm[which(ptm$Sample.Name..child.==samp),]$Gene.Name)))
 
 
-if(opt$summary){writeSummary(samp.dnm.tierOne,samp.hom.tierOne,samp.hem.tierOne,samp.chet.tierOne,samp.tierTwo,dirname(opt$out))}
+if(opt$summary){
+    writeSummary(samp.dnm.tierOne,samp.hom.tierOne,samp.hem.tierOne,samp.chet.tierOne,samp.tierTwo,dirname(opt$out))
+    writeNonTrioSummary(samp.kv,samp.t2lof,dir=dirname(opt$out))    
+    }
 #Add new variant/genotype type
 samp.dnm.tierOne$Gene.Name <- lapply(samp.dnm.tierOne$Gene.Name,function(x){paste0(gsub("'","",x),"(DN)")})
 samp.hom.tierOne$Gene.Name <- lapply(samp.hom.tierOne$Gene.Name,function(x){paste0(gsub("'","",x),"(HO)")})
@@ -516,6 +548,21 @@ samp.dnm.hze <- samp.dnm.tierOne[which((samp.dnm.tierOne$Polyphen.Humvar.Score >
                                         (samp.dnm.tierOne$MGI.Essential == T)),
                                 ]$Gene.Name
 samp.hze <- gsub("'","",unique(c(as.vector(samp.dnm.hze))))
+#HZ none
+samp.dnm.hz <- samp.dnm.tierOne[which((samp.dnm.tierOne$Polyphen.Humvar.Score >= .95  | 
+                                        samp.dnm.tierOne$Effect %in%  LoF_var)  & 
+                                        ((samp.dnm.tierOne$X0.1.RVIS..EVS. <= 25  &
+                                         samp.dnm.tierOne$EdgeCase.EVS. == "N")  |
+                                        (samp.dnm.tierOne$OEratio.tile.EVS. <= 25  &
+                                         samp.dnm.tierOne$EdgeCase.EVS. == "Y")  |
+                                        (samp.dnm.tierOne$GenicConstraint.EVS. <= 25)  |
+                                        (samp.dnm.tierOne$X0.05._anypopn_RVIS.tile.ExAC. <= 25  &
+                                         samp.dnm.tierOne$EdgeCase.EVS. == "N")  |
+                                        (samp.dnm.tierOne$OEratio.tile.ExAC. <= 25  &
+                                         samp.dnm.tierOne$EdgeCase.EVS. == "Y")  |
+                                        (samp.dnm.tierOne$GenicConstraint_mis.z.tile.ExAC. <= 25))),
+                                ]$Gene.Name
+samp.hz <- gsub("'","",unique(c(as.vector(samp.dnm.hz))))
 #ClinGen/Var LoF
 haploinsufficient = c("Sufficient evidence","Some evidence")
 haploinsufficient_or_recessive = c("Sufficient evidence","Recessive evidence","Some evidence")
@@ -640,7 +687,7 @@ samp.KnownVar <- gsub("'","",unique(c(as.vector(samp.dnm.KnownVar),as.vector(sam
 
 samp.gcClinicalOMIM <- unique(gsub("'","",c(as.vector(samp.dnm.tierOne[which(!is.na(samp.dnm.tierOne$OMIM.Disease)),]$Gene.Name),as.vector(samp.hem.tierOne[which(!is.na(samp.hem.tierOne$OMIM.Disease)),]$Gene.Name),as.vector(samp.hom.tierOne[which(!is.na(samp.hom.tierOne$OMIM.Disease)),]$Gene.Name),as.vector(samp.chet.tierOne[which(!is.na(samp.chet.tierOne$OMIM.Disease.1)),]$Gene.Name.1),"-")))
 
-samp.gcClinicalnonOMIM <- unique(gsub("'","",c(as.vector(samp.hzo),as.vector(samp.hze),as.vector(samp.LoF))))
+samp.gcClinicalnonOMIM <- unique(gsub("'","",c(as.vector(samp.hzo),as.vector(samp.hze),as.vector(samp.hz),as.vector(samp.LoF))))
 samp.gcClinicalnonOMIM <- c(samp.gcClinicalnonOMIM[!samp.gcClinicalnonOMIM %in% samp.gcClinicalOMIM],"-")
 
 if(opt$nontrio){samp.tier2gcClinicalOMIM=""}
@@ -664,9 +711,8 @@ if(opt$pheno != "NULL"){
     pheno <- read.csv(opt$pheno)
     for(i in 1:dim(sum)[1]){
         samp <- sum[i,1]
-        sampPheno <- pheno[which(pheno$CHGVID == samp),]$DetailedPhenotype
-        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype}
-        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$Phenotype}
+        sampPheno <- pheno[which(pheno$CHGVID == samp),]$DetailedPhenotype[1]
+        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype[1]}
         sum[i,13] <- as.vector(sampPheno)
     }
 }
