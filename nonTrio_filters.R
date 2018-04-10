@@ -139,6 +139,7 @@ Parse.Allele.Count.EVS <- function(s) {
 }
 
 Filter.by.Allele.Count <- function(data, threshold) {
+  if (dim(data)[1] ==0) { return(data)}
   #Get IGM allele count
   stopifnot(length(which(colnames(data) == "Hom.Ref.Ctrl"))>0)
   stopifnot(length(which(colnames(data) == "Het.Ctrl"))>0)
@@ -480,7 +481,7 @@ Filter.for.tier2.prec.kv.lof <- function(data) {
   #inclusion rule 2:
   suppressWarnings(temp <- sapply(data[normalized.name("HGMD indel 9bpflanks")], as.numeric))
   temp[is.na(temp)] <- 0
-  R21 <- temp > 0
+  R21 <- temp > 0 
 
   suppressWarnings(temp <- sapply(data[normalized.name("ClinVar pathogenic indels")], as.numeric))
   temp[is.na(temp)] <- 0
@@ -499,6 +500,8 @@ Filter.for.tier2.prec.kv.lof <- function(data) {
             | (x=="exon_loss_variant"))
   }
   Functional  <-fun.functional(sapply(data[normalized.name("Effect")], as.character))
+  #data <- data[Functional,]
+  #if (dim(data)[1] ==0) { return(data)}
 
   #inclusion rule 4:
   R4 <- Functional & (sapply(data[normalized.name("ClinGen")], as.character) == '1')
