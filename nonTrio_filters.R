@@ -531,4 +531,57 @@ Filter.for.tier2.prec.kv.lof <- function(data) {
   data
 }
 
+Filter.for.ClinVarExact <- function(data) {
+
+  #check for correct columns
+  columns <- c("ExAC global gts","MQ", "QD", "Qual","DP",
+               "Percent Alt Read","Effect", "HGMD Class", "HGMDm2site",
+               "HGMDm1site", "HGMDp1site", "HGMDp2site", "HGMD indel 9bpflanks", "ClinVar pathogenic indels",
+               "ClinVar Clinical Significance"
+  )
+  #make sure all columns are present
+  if(!(length(setdiff(normalized.name(columns),colnames(data))) ==0)){stop("Columns missing at ClinVar Exact")}
+  #Exclusion rule 2:
+  Index <- is.na(data[normalized.name("ExAC global af")]) | data[normalized.name("ExAC global af")] < 0.01
+  data <- data[Index,]
+
+  #Exclusion rule 3:
+  suppressWarnings(temp <- sapply(data[normalized.name("MQ")], as.numeric))
+  temp[is.na(temp)] <- 0
+  ER31 <- temp < 40
+
+  suppressWarnings(temp <- sapply(data[normalized.name("QD")], as.numeric))
+  temp[is.na(temp)] <- 0
+  ER32 <- temp < 2
+
+  suppressWarnings(temp <- sapply(data[normalized.name("Qual")], as.numeric))
+  temp[is.na(temp)] <- 0
+  ER33 <- temp < 30
+
+  suppressWarnings(temp <- sapply(data[normalized.name("DP")], as.numeric))
+  temp[is.na(temp)] <- 0
+  ER34 <- temp < 3
+
+  ER3 <- !(ER31 | ER32 | ER33 | ER34)
+  data <- data[ER3,]
+
+  #Exclusion rule 4:
+  suppressWarnings(temp <- sapply(data[normalized.name("Percent Alt Read")], as.numeric))
+  temp[is.na(temp)] <- 0
+  ER4 <- temp >= 0.2
+  data <- data[ER4,]
+
+  #Exclusion rule 5:
+  ER5 <- !grepl("?Site",data['ClinVar.Disease'][,])
+  data <- data[ER5,]
+
+  #inclusion rule 4:
+  temp <- sapply(data[normalized.name("ClinVar Clinical Significance")], as.character)
+  temp[is.na(temp)] <- 'NA'
+  R4 = (temp == "Pathogenic") | (temp == "Likely Pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+
+  R.all <- R4
+  data <- data[R.all,]
+  data
+}
 

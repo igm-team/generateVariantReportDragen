@@ -128,6 +128,14 @@ prec <- read.csv("prec_kv_lof.csv.vep",na.strings="NA")
 if(dim(prec)[1]>0){prec <- cbind(prec, paste0(prec$Variant.ID,"\nnonTrio\n",prec$HGVSc,"\n",prec$HGVSp,"\n",prec$DP,"\n",prec$Percent.Alt.Read,"\n",prec$GQ))
 colnames(prec)[dim(prec)[2]] <- "PGM.Info"}
 
+#ClinVar Exact
+CVExact <- Filter.for.ClinVarExact(input.data)
+write.csv(CVExact, file = "clinvar_exact.csv")
+if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i clinvar_exact.csv --append_file clinvar_exact.csv.vep --force_append"),wait=T)}
+CVExact <- read.csv("clinvar_exact.csv.vep",na.strings="NA")
+if(dim(CVExact)[1]>0){CVExact <- cbind(CVExact, paste0(CVExact$Variant.ID,"\nnonTrio\n",CVExact$HGVSc,"\n",CVExact$HGVSp,"\n",CVExact$DP,"\n",CVExact$Percent.Alt.Read,"\n",CVExact$GQ))
+colnames(CVExact)[dim(CVExact)[2]] <- "PGM.Info"}
+
 #Add parent sheet 
 #Merging additional annotations to table
 #if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$pt," --append_file ",opt$pt, ".vep --force_append"),wait=T)}
@@ -158,6 +166,7 @@ sum.sheet <- createSheet(outwb, sheetName = "Summary")
     kv.sheet <- createSheet(outwb, sheetName = "pDNM-KV")
     kv5.sheet <- createSheet(outwb, sheetName = "pDNM-KV5")
     pdnm.sheet <- createSheet(outwb, sheetName = "pDNM-LoF5")
+    CVExact.sheet <- createSheet(outwb, sheetName = "CVExact")
     prec.sheet <- createSheet(outwb, sheetName = "pREC-KVLoF")
     pchet.sheet <- createSheet(outwb, sheetName = "pCHET-KVLoF")
     pdnmd.sheet <- createSheet(outwb, sheetName = "pDNM-LoFD")
@@ -165,6 +174,7 @@ sum.sheet <- createSheet(outwb, sheetName = "Summary")
     kvCellBlock <- CellBlock(kv.sheet,1,1,dim(kv)[1]+1,dim(kv)[2])
     kv5CellBlock <- CellBlock(kv5.sheet,1,1,dim(kv5)[1]+1,dim(kv5)[2]) 
     pdnmCellBlock <- CellBlock(pdnm.sheet,1,1,dim(pdnm)[1]+1,dim(pdnm)[2])
+    CVExactCellBlock <- CellBlock(CVExact.sheet,1,1,dim(CVExact)[1]+1,dim(CVExact)[2])
     precCellBlock <- CellBlock(prec.sheet,1,1,dim(prec)[1]+1,dim(prec)[2])
     pchetCellBlock <- CellBlock(pchet.sheet,1,1,dim(pchet)[1]+1,dim(pchet)[2])
     pdnmdCellBlock <- CellBlock(pdnmd.sheet,1,1,dim(pdnmd)[1]+1,dim(pdnmd)[2])
@@ -172,6 +182,7 @@ sum.sheet <- createSheet(outwb, sheetName = "Summary")
     addDataFrame(kv, kv.sheet, row.names=F, showNA=F)
     addDataFrame(kv5, kv5.sheet, row.names=F, showNA=F)
     addDataFrame(pdnm, pdnm.sheet, row.names=F, showNA=F)
+    addDataFrame(CVExact, CVExact.sheet, row.names=F, showNA=F)
     addDataFrame(prec, prec.sheet, row.names=F, showNA=F)
     addDataFrame(pchet, pchet.sheet, row.names=F, showNA=F)
     addDataFrame(pdnmd, pdnmd.sheet, row.names=F, showNA=F)
@@ -247,11 +258,12 @@ highlightCCDSx <- function(data, myCellBlock, is.comphet = F){
 }
 
 #Create Summary Table
-for(samp in unique(c(as.vector(kv$Sample.Name),as.vector(kv5$Sample.Name),as.vector(pdnm$Sample.Name),as.vector(prec$Sample.Name),as.vector(pchet$Sample.Name),as.vector(pdnmd$Sample.Name)))){
+for(samp in unique(c(as.vector(kv$Sample.Name),as.vector(kv5$Sample.Name),as.vector(pdnm$Sample.Name),as.vector(CVExact$Sample.Name),as.vector(prec$Sample.Name),as.vector(pchet$Sample.Name),as.vector(pdnmd$Sample.Name)))){
 
 Nkv <- length(which(kv$Sample.Name==samp))
 Nkv5 <- length(which(kv5$Sample.Name==samp))
 Npdnm <- length(which(pdnm$Sample.Name==samp))
+NCVExact <- length(which(CVExact$Sample.Name==samp))
 Nprec <- length(which(prec$Sample.Name==samp))
 Npchet <- length(which(pchet$Sample.Name==samp))
 Npdnmd <- length(which(pdnmd$Sample.Name==samp))
@@ -259,18 +271,20 @@ Npdnmd <- length(which(pdnmd$Sample.Name==samp))
 samp.kv <- kv[which(kv$Sample.Name==samp),]
 samp.kv5 <- kv5[which(kv5$Sample.Name==samp),]
 samp.pdnm <- pdnm[which(pdnm$Sample.Name==samp),]
+samp.CVExact <- CVExact[which(CVExact$Sample.Name==samp),]
 samp.prec <- prec[which(prec$Sample.Name==samp),]
 samp.pchet <- pchet[which(pchet$Sample.Name==samp),]
 samp.pdnmd <- pdnmd[which(pdnmd$Sample.Name==samp),]
 samp.kv.genes <- kv[which(kv$Sample.Name==samp),]$Gene.Name
 samp.kv5.genes <- kv5[which(kv5$Sample.Name==samp),]$Gene.Name
 samp.pdnm.genes <- pdnm[which(pdnm$Sample.Name==samp),]$Gene.Name
+samp.CVExact.genes <- CVExact[which(CVExact$Sample.Name==samp),]$Gene.Name
 samp.prec.genes <- prec[which(prec$Sample.Name==samp),]$Gene.Name
 samp.pchet.genes <- pchet[which(pchet$Sample.Name==samp),]$Gene.Name
 samp.pdnmd.genes <- pdnmd[which(pdnmd$Sample.Name==samp),]$Gene.Name
-if(opt$summary){writeNonTrioSummary(samp.kv,samp.kv5,samp.pdnm,samp.prec,samp.pchet,samp.pdnmd,dirname(opt$out))}
+if(opt$summary){writeNonTrioSummary(samp.kv,samp.kv5,samp.pdnm,samp.CVExact,samp.prec,samp.pchet,samp.pdnmd,dirname(opt$out))}
 
-sum <- rbind(sum,c(samp,Nkv,Nkv5,Npdnm,Nprec,Npchet,Npdnmd,paste(gsub("'","",samp.kv.genes),collapse="\n"),paste(gsub("'","",samp.kv5.genes),collapse="\n"),paste(gsub("'","",samp.pdnm.genes),collapse="\n"),paste(gsub("'","",samp.prec.genes),collapse="\n"),paste(gsub("'","",samp.pchet.genes),collapse="\n"),paste(gsub("'","",samp.pdnmd.genes),collapse="\n"),""))
+sum <- rbind(sum,c(samp,Nkv,Nkv5,Npdnm,NCVExact,Nprec,Npchet,Npdnmd,paste(gsub("'","",samp.kv.genes),collapse="\n"),paste(gsub("'","",samp.kv5.genes),collapse="\n"),paste(gsub("'","",samp.pdnm.genes),collapse="\n"),paste(gsub("'","",samp.CVExact.genes),collapse="\n"),paste(gsub("'","",samp.prec.genes),collapse="\n"),paste(gsub("'","",samp.pchet.genes),collapse="\n"),paste(gsub("'","",samp.pdnmd.genes),collapse="\n"),""))
 }
 
 #Add in samples with no tier1/2 variants
@@ -287,12 +301,12 @@ if(opt$pheno != "NULL"){
         samp <- sum[i,1]
         sampPheno <- pheno[which(pheno$CHGVID == samp),]$DetailedPhenotype[1]
         if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype[1]}
-        sum[i,14] <- as.vector(sampPheno)
+        sum[i,16] <- as.vector(sampPheno)
     }
 }
 #Write Excel file
 
-sum <- rbind(c("diagseq","pDNM KV",paste0("pDNM KV",opt$filter),"T2 pDNM LoF","T2 pRec LoF","T2 pCHET LoF","pDNM LoFd","pDNM KnownVar",paste0("pDNM KnownVar (<",opt$filter," Alleles)"),"Tier 2 pDNM LoF","Tier 2 pRec LoF","Tier 2 pCHET LoF","Tier 2 pDNM LoF Depleted","Phenotype"),sum)
+sum <- rbind(c("diagseq","pDNM KV",paste0("pDNM KV",opt$filter),"T2 pDNM LoF","CVExact","T2 pRec LoF","T2 pCHET LoF","pDNM LoFd","pDNM KnownVar",paste0("pDNM KnownVar (<",opt$filter," Alleles)"),"Tier 2 pDNM LoF","ClinVar Exact","Tier 2 pRec LoF","Tier 2 pCHET LoF","Tier 2 pDNM LoF Depleted","Phenotype"),sum)
 
 cellBlock <- CellBlock(sum.sheet,1,1,dim(sum)[1],dim(sum)[2])
 colnames_style <- CellStyle(outwb) + Font(outwb,isBold=T) + Alignment(horizontal="ALIGN_CENTER",vertical="VERTICAL_CENTER")
@@ -310,28 +324,28 @@ CB.setBorder(cellBlock,colname_border,1,1:dim(sum)[2])
 
 setRowHeight(getRows(sum.sheet,1),1,multiplier=3)
 for(col in c(1)){
-    setColumnWidth(sum.sheet,col,14)
+    setColumnWidth(sum.sheet,col,16)
 }
-setColumnWidth(sum.sheet,14,24)
-for(col in c(9:13)){
+setColumnWidth(sum.sheet,16,24)
+for(col in c(9:14)){
     setColumnWidth(sum.sheet,col,11)
 }
-for(col in c(2:7)){
+for(col in c(2:8)){
     setColumnWidth(sum.sheet,col,6)
 }
 redFill <- Fill(foregroundColor = "red", backgroundColor = "red")
 
-for(col in c(8:13)){
+for(col in c(9:14)){
     ind <- which(sum[,col] != "")
     if(length(ind) > 0){CB.setFill(cellBlock, redFill, ind, col)}
 }
 #ind <- which(sum[,8] != "")
 #CB.setFill(cellBlock, redFill, ind, 8)
 grayFill <- Fill(foregroundColor = "gray")
-CB.setFill(cellBlock, grayFill, 1,8:dim(sum)[2])
+CB.setFill(cellBlock, grayFill, 1,9:dim(sum)[2])
 smallFont <- Font(outwb,heightInPoints=10)
-CB.setFont(cellBlock, smallFont, 2:dim(sum)[1],14)
-CB.setFont(cellBlock, smallFont, 1, 2:7)
+CB.setFont(cellBlock, smallFont, 2:dim(sum)[1],16)
+CB.setFont(cellBlock, smallFont, 1, 2:8)
 
 excelColumn<- function(num){
     name <- "" 
@@ -346,6 +360,7 @@ excelColumn<- function(num){
 addAutoFilter(sum.sheet,paste0("A:",excelColumn(dim(sum)[2])))
 addAutoFilter(kv.sheet,paste0("A:",excelColumn(dim(kv)[2])))
 addAutoFilter(pdnm.sheet,paste0("A:",excelColumn(dim(pdnm)[2])))
+addAutoFilter(CVExact.sheet,paste0("A:",excelColumn(dim(CVExact)[2])))
 addAutoFilter(prec.sheet,paste0("A:",excelColumn(dim(prec)[2])))
 
 createFreezePane(sum.sheet,2,5)
@@ -355,6 +370,8 @@ createFreezePane(kv5.sheet,2,5)
 highlightCCDSx(kv5,kv5CellBlock)
 createFreezePane(pdnm.sheet,2,5)
 highlightCCDSx(pdnm,pdnmCellBlock)
+createFreezePane(CVExact.sheet,2,6)
+highlightCCDSx(CVExact,CVExactCellBlock)
 createFreezePane(prec.sheet,2,6)
 highlightCCDSx(prec,precCellBlock)
 createFreezePane(pdnmd.sheet,2,5)
