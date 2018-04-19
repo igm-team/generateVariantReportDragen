@@ -386,9 +386,9 @@ col.id <- grep("Effect",colnames(tnt.data))
 new.pos <- 4
 tnt.data <- tnt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(tnt.data))[-(col.id-new.pos+1)])]
 
-data <- Filter.by.Allele.Count(tnt.data,0)
+data <- Filter.by.Allele.Count(tnt.data,5)
 kv <- Filter.for.tier2.pdnm.kv(data)
-data <- Filter.by.Allele.Count(tnt.data,0)
+data <- Filter.by.Allele.Count(tnt.data,5)
 t2lof <- Filter.for.tier2.pdnm.lof(data)
 write.csv(kv,file = "kvTNT.csv")
 write.csv(t2lof, file = "t2lof.csv")
