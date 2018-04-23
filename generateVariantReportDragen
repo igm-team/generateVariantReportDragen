@@ -213,16 +213,14 @@ opt = parse_args(opt_parser)
 source(paste(scriptPath,"/trio_filters.R",sep=""))
 
 MGIe <- read.table(opt$MGIe,header=T)
-ctrl_counts <- read.table(paste0(scriptPath,"/ctrl_counts/gene_counts.txt"),header=T)
-case_counts <- read.table(paste0(scriptPath,"/case_counts/gene_counts.txt"),header=T)
+all_counts <- read.table(paste0(scriptPath,"/all_counts/gene_counts.txt"),header=T)
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$dnm," --append_file ",opt$dnm, ".vep --force_append"),wait=T)}
 #Tier 1 filtering DNM 
 #Merging additional annotations to table
 dnm.data = read.csv(paste0(opt$dnm,".vep"),na.strings="NA")
 dnm.data <- cbind(dnm.data, gsub("'","",dnm.data$Gene.Name) %in% MGIe$Gene_symbol)
 colnames(dnm.data)[dim(dnm.data)[2]] <- "MGI.Essential"
-dnm.data <- merge(dnm.data, ctrl_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
-dnm.data <- merge(dnm.data, case_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
+dnm.data <- merge(dnm.data, all_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
 dnm.data <- cbind(dnm.data, paste0(dnm.data$Variant.ID,"\n",dnm.data$Denovo.Flag,"\n",dnm.data$HGVSc,"\n",dnm.data$HGVSp,"\n",dnm.data$DP,"\n",dnm.data$Percent.Alt.Read,"\n",dnm.data$GQ))
 colnames(dnm.data)[dim(dnm.data)[2]] <- "PGM.Info"
 col.id <- grep("Sample.Name",colnames(dnm.data))
@@ -300,8 +298,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$cmphet," --appe
 chet.data = read.csv(paste0(opt$cmphet,".vep"),na.strings="NA") 
 chet.data <- cbind(chet.data, gsub("'","",chet.data$Gene.Name...1.) %in% MGIe$Gene_symbol)
 colnames(chet.data)[dim(chet.data)[2]] <- "MGI.Essential"
-chet.data <- merge(chet.data, ctrl_counts, by.x = "Gene.Name...1.", by.y = "Gene", all.x = T)
-chet.data <- merge(chet.data, case_counts, by.x = "Gene.Name...1.", by.y = "Gene", all.x = T)
+chet.data <- merge(chet.data, all_counts, by.x = "Gene.Name...1.", by.y = "Gene", all.x = T)
 chet.data <- cbind(chet.data, paste0(chet.data$Variant.ID...1.,"\n",chet.data$Comp.Het.Flag,"\n",chet.data$HGVSc...1.,"\n",chet.data$HGVSp...1.,"\n",chet.data$DP...1.,"\n",chet.data$Percent.Alt.Read...1.,"\n",chet.data$GQ...1.)) #,chet.data$GQ...1.))
 colnames(chet.data)[dim(chet.data)[2]] <- "PGM.Info.1"
 chet.data <- cbind(chet.data, paste0(chet.data$Variant.ID...2.,"\n",chet.data$Comp.Het.Flag,"\n",chet.data$HGVSc...2.,"\n",chet.data$HGVSp...2.,"\n",chet.data$DP...2.,"\n",chet.data$Percent.Alt.Read...2.,"\n",chet.data$GQ...2.)) #,chet.data$GQ...2.))
@@ -353,8 +350,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$ptm," --append_
 ptm.data = read.csv(paste0(opt$ptm,".vep"),na.strings="NA")
 ptm.data <- cbind(ptm.data, gsub("'","",ptm.data$Gene.Name) %in% MGIe$Gene_symbol)
 colnames(ptm.data)[dim(ptm.data)[2]] <- "MGI.Essential"
-ptm.data <- merge(ptm.data, ctrl_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
-ptm.data <- merge(ptm.data, case_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
+ptm.data <- merge(ptm.data, all_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
 colnames(ptm.data)[dim(ptm.data)[2]] <- "PGM.Info"
 col.id <- grep("Sample.Name",colnames(ptm.data))
 new.pos <- 2
