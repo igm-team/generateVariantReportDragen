@@ -38,8 +38,7 @@ writeDNM <- function(dnm,rtf){
             addText(rtf,paste0("This variant is only covered in ",dnm[i,]$ExAC.Sample.Covered.10x," samples in ExAC.  "))}
         if(dnm[i,]$Percent.Alt.Read.Binomial.P < 0.05){
             addText(rtf,paste0("This variant appears to mosaic with a binomial p-value of ",dnm[i,]$Percent.Alt.Read.Binomial.P,".  "))}
-        if(!is.null(dnm[i,]$gnomAD.Exome.filter)){
-            addText(rtf,paste0("This variant is marked as a ",dnm[i,]$gnomAD.Exome.filter," in gnomAD.  "))}
+        addText(rtf,paste0("We have cases with ",dnm[i,]$All.dnm," de novo, ",dnm[i,]$All.hem," newly hemizygous, ",dnm[i,]$All.hom," newly homozygous, and ",dnm[i,]$All.chet+dnm[i,]$All.pchet," compouned het, tier 1 variants. "))
         addText(rtf,"\n")
         endParagraph(rtf)
     }
@@ -62,6 +61,7 @@ writeCHET <- function(chet,rtf){
            adj="";if(!is.na(chet[i,]$MGI.Essential.1) & chet[i,]$MGI.Essential.1 == 1){adj=", and an essential gene"}
            addText(rtf,paste0(gene," is an OMIM disease gene associated with ",gsub(" \\|",", and", chet[i,]$OMIM.Disease.1),adj,". "))}
         else if(!is.na(chet[i,]$MGI.Essential.1) & chet[i,]$MGI.Essential.1 == 1){addText(rtf,paste0(gene," is an essential gene. "))}
+        addText(rtf,paste0("We have cases with ",chet[i,]$All.dnm," de novo, ",chet[i,]$All.hem," newly hemizygous, ",chet[i,]$All.hom," newly homozygous, and ",chet[i,]$All.chet+dnm[i,]$All.pchet," compouned het, tier 1 variants. "))
         addText(rtf,"\n")
         
 #First variant
