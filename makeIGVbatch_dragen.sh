@@ -7,33 +7,13 @@ IN=$1
 awk '{print $2"\n"$3"\n"$4}' <(sed '1d' $IN) |sort -u > $(dirname $IN)/$(basename ${IN%.*}).list
 
 while read line; do  
-    alignLoc="NULL"
-    if [[ $alignLoc == "NULL" ]]
-        then tmp=$(find \
-        $(mysql --defaults-group-suffix=sequencedragen --defaults-file=/nfs/goldstein/software/Bioinformatics_Tools/generateVariantReport/.my.cnf -e "select AlignSeqFileLoc from dragen_qc_metrics inner join dragen_sample_metadata on dragen_sample_metadata.pseudo_prepid = dragen_qc_metrics.pseudo_prepid where dragen_sample_metadata.sample_name = '$line' ;" |head -n2|tail -n1|sed 's/_temp[0-9]\?/18/')/$line* \
-        -name '*recal.bam')
-    else
-        tmp=$(find \
-        $alignLoc \
-        -name '*final.bam') #final
-    fi
-
-    if [ -z "${tmp//\/\//\/}" ]
-        then 
-            tmp=$(find $alignLoc -name '*.bam')
-            if [ -z "${tmp//\/\//\/}" ]
-            then >&2 echo "ERROR: Did not find BAM for $line"
-            continue
-            fi
-    elif [ $(du -sh $tmp|wc -l) -gt 1 ]
-        then >&2 echo "ERROR: Found more than one BAM for $line"
-             >&2 echo "$tmp"
-             continue
-             fi
+        prepid=$(mysql --defaults-group-suffix=sequencedragen --defaults-file=/nfs/goldstein/software/Bioinformatics_Tools/generateVariantReport/.my.cnf -e "select pseudo_prepid from dragen_sample_metadata where dragen_sample_metadata.sample_name = '$line' ;" |head -n2|tail -n1|sed 's/_temp[0-9]\?/18/')
+        alignLoc=$(mysql --defaults-group-suffix=sequencedragen --defaults-file=/nfs/goldstein/software/Bioinformatics_Tools/generateVariantReport/.my.cnf -e "select AlignSeqFileLoc from dragen_qc_metrics inner join dragen_sample_metadata on dragen_sample_metadata.pseudo_prepid = dragen_qc_metrics.pseudo_prepid where dragen_sample_metadata.sample_name = '$line' ;" |head -n2|tail -n1|sed 's/_temp[0-9]\?/18/')/${line}.${prepid}/${line}.${prepid}.realn.recal.bam
     
-    if [ $alignLoc == "NULL" ];then echo $tmp
-    elif [[ -f $tmp ]];then echo $tmp
-    else echo "$(dirname $tmp)/$(basename $(readlink $tmp))";fi
+        echo $alignLoc
+    #if [ $alignLoc == "NULL" ];then echo $tmp
+    #elif [[ -f $tmp ]];then echo $tmp
+    #else echo "$(dirname $tmp)/$(basename $(readlink $tmp))";fi
     
 
 done<$(dirname $IN)/$(basename ${IN%.*}).list|sort -u > $(dirname $IN)/$(basename ${IN%.*}).bamloc
