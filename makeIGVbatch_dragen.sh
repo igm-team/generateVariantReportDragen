@@ -40,7 +40,7 @@ while read i;
 
 
 #sed 's/\/nfs/\\\\10.73.50.80/' $(dirname $IN)/$(basename ${IN%.*}).bamloc |sed 's/\//\\/g' > $(dirname $IN)/$(basename ${IN%.*}).bamwinloc
-find $(pwds)/$(dirname $IN)/BAMS -name '*.bam'|sed 's/\.\///'|sed 's/home\/[^\/]*/\/10.73.50.80\/homes/'|sed 's/\/nfs/\\\\10.73.50.80/' |sed 's/homes\/svaprojects/homes/'| sed 's/\//\\/g'|sed 's/\\\\ALIGNMENT/\\ALIGNMENT/g' > $(dirname $IN)/$(basename ${IN%.*}).bamwinloc
+find $(pwd)/$(dirname $IN)/BAMS -name '*.bam'|sed 's/\.\///'|sed 's/home\/[^\/]*/\/10.73.50.80\/homes/'|sed 's/\/nfs/\\\\10.73.50.80/' |sed 's/homes\/svaprojects/homes/'| sed 's/\//\\/g'|sed 's/\\\\ALIGNMENT/\\ALIGNMENT/g' > $(dirname $IN)/$(basename ${IN%.*}).bamwinloc
 #sed 's/\/nfs/\\\\igm-avere.igm.cumc.columbia.edu/' $(dirname $IN)/$(basename ${IN%.*}).bamloc |sed 's/homes\/svaprojects/homes/' | sed 's/\//\\/g' > $(dirname $IN)/$(basename ${IN%.*}).bamwinloc
 
 while read i
@@ -56,5 +56,5 @@ while read i
        PRO=$(echo $i|awk '{print $2}')
        echo "$PRO_LOC $DAD_LOC $MOM_LOC $VAR_CHR $VAR_LOC $((VAR_LOC-40)) $((VAR_LOC+40)) $PRO $VAR_GENE";done < <(sed 's/ /_/g' $IN|sed 's/-/\t/'|sed 's/-/\t/'|sed '1d'|sort -k6,6n) > $(dirname $IN)/$(basename ${IN%.*}).info.txt
 
-       dir=$(pwds|sed 's/\/nfs/\\\\10.73.50.80/'|sed 's/home\/[^\/]*/10.73.50.80\/homes/'|sed 's/homes\/goldsteinlab/goldsteinlab/'|sed 's/homes\/svaprojects/svaprojects\/ns3116/'|sed 's/\//\\\\/g')
+       dir=$(pwd|sed 's/\/nfs/\\\\10.73.50.80/'|sed 's/home\/[^\/]*/10.73.50.80\/homes/'|sed 's/homes\/goldsteinlab/goldsteinlab/'|sed 's/homes\/svaprojects/svaprojects\/ns3116/'|sed 's/\//\\\\/g')
        awk -v dir="$dir" '{print "#"$8" "$4":"$5"\n""new\ngenome 1kg_v37\nload " $1"\nload " $2"\nload "$3"\nsnapshotDirectory \\"dir"\\IGV\ngoto "$4":"$6"-"$7"\nsort position\ncolor read strand\nsnapshot "$9"."$8"."$4"-"$5".png\ncollapse\nsnapshot "$9"."$8"."$4"-"$5".collapsed.png\n"}' <(sort -k9,9 $(dirname $IN)/$(basename ${IN%.*}).info.txt) >$(dirname $IN)/$(basename ${IN%.*}).batch
