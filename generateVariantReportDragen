@@ -200,10 +200,8 @@ make_option(c("-o","--out"), type="character", default="variant_report.xlsx", he
 make_option(c("-m","--mgi"), type="character", default=paste(scriptPath,"/MGI_essential.txt",sep=""), help="MGI essiential gene list [default  = <Script Path>/MGI_essential.txt]", dest="MGIe"),
 make_option(c("-s","--summary"), type="logical", default=F, action="store_true", help="Flag to generate individual sample text summaries [default  = False"),
 make_option(c("-p","--pheno"), type="character", default="NULL", help="seqDB file containing sample phenotypes [default  = NULL]"),
-make_option(c("--nochet"), type="logical", default=F, action="store_true", help="Flag to process files as a non-trio, imposing additional filters to the tier one rules [default  = False]"),
 make_option(c("--noIGV"), type="logical", default=F, action="store_true", help="Flag to resuse existing IGV batch script files and skip generating [default  = False]"),
-make_option(c("--noVEP"), type="logical", default=F, action="store_true", help="Flag to resuse existing VEP output files and skip running VEP [default  = False]"),
-make_option(c("-n","--nontrio"), type="logical", default=F, action="store_true", help="Flag to process files as a non-trio, imposing additional filters to the tier one rules [default  = False]")
+make_option(c("--noVEP"), type="logical", default=F, action="store_true", help="Flag to resuse existing VEP output files and skip running VEP [default  = False]")
 )
 #make_option(c("-r","--raw"), type="character", default="atav_summary.xlsx", help="ATAV raw output summary excel [default = atav_summary.xlsx")
 
@@ -234,33 +232,22 @@ new.pos <- 4
 dnm.data <- dnm.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(dnm.data))[-(col.id-new.pos+1)])]
 
 #de novo
-if(opt$nontrio){
-dnm <- dnm.data[which(dnm.data$Genotype == "het"),]
-dnm <- nonTrioToTrio(dnm)
-pdnm <- dnm[which(do.call(paste,c(dnm[c("Sample.Name","Gene.Name")],sep="")) %in% names(table(do.call(paste,c(dnm[c("Sample.Name","Gene.Name")],sep="")))[which(table(do.call(paste,c(dnm[c("Sample.Name","Gene.Name")],sep=""))) == 1)])),]
-pchet <- dnm[which(do.call(paste,c(dnm[c("Sample.Name","Gene.Name")],sep="")) %in% names(table(do.call(paste,c(dnm[c("Sample.Name","Gene.Name")],sep="")))[which(table(do.call(paste,c(dnm[c("Sample.Name","Gene.Name")],sep=""))) > 1)])),]
-}else{
 data <- Filter.by.Denovo.Flag(dnm.data,'DE NOVO', strict = TRUE)
 dnm <- Filter.for.denovo(data)
 data <- Filter.by.Denovo.Flag(dnm.data,'DE NOVO', strict = FALSE)
 data <- Filter.by.Allele.Count(data,19)
 tier2 <- Filter.for.tier2(data,is.denovo=F)
-}
+
 dnm <- cbind(dnm,HGVSg(dnm))
-if(!opt$nontrio){
 #Make IGV batch script
 IGV_dir = file.path(dirname(opt$out),"IGV")
 dir.create(IGV_dir,showWarnings=F)
 write.table(gsub("'","",as.matrix(dnm[,c("Family.ID","Sample.Name","Mother","Father","Denovo.Flag","Variant.ID","Gene.Name")])),file=file.path(IGV_dir,"dnm.IGV.txt"),quote=F,row.names=F,sep="\t")
 if(!opt$noVEP){system(paste0(scriptPath,"/makeIGVbatch_dragen.sh ",file.path(IGV_dir,"dnm.IGV.txt")," 2>&1 >",file.path(IGV_dir,"dnm.IGV.log")),ignore.stderr=T,wait=F)}
-}
+
 write.csv(dnm[,!names(dnm) %in% c("PGM.Info")], file = "denovo.csv")
 
 #hemizygous
-if(opt$nontrio){
-hem <- dnm.data[which(dnm.data$Genotype == "empty"),]
-hem <- nonTrioToTrio(hem)
-}else{
 data <- Filter.by.Denovo.Flag(dnm.data,'NEWLY HEMIZYGOUS', strict = TRUE) 
 data <- rbind(data,Filter.by.Denovo.Flag(dnm.data,'COMPOUND DELETION', strict = TRUE))
 hem <- Filter.for.hemizygous(data)
@@ -268,31 +255,22 @@ data <- Filter.by.Denovo.Flag(dnm.data,'NEWLY HEMIZYGOUS', strict = FALSE)
 data <- rbind(data,Filter.by.Denovo.Flag(dnm.data,'COMPOUND DELETION', strict = FALSE))
 data <- Filter.by.HemiHomo.Count(data,9)
 tier2 <- rbind(tier2,Filter.for.tier2(data))
-}
+
 hem <- cbind(hem, HGVSg(hem))
 write.csv(hem[,!names(hem) %in% c("PGM.Info")], file = "hemizygous.csv")
 
 #homozygous
-if(opt$nontrio){
-hom <- dnm.data[which(dnm.data$Genotype == "hom"),] 
-hom <- nonTrioToTrio(hom)
-}else{
-    data <- Filter.by.Denovo.Flag(dnm.data,'NEWLY HOMOZYGOUS', strict = TRUE)  
-    hom <- Filter.for.homozygous(data)
-    data <- Filter.by.Denovo.Flag(dnm.data,'NEWLY HOMOZYGOUS', strict = FALSE)  
-    data <- Filter.by.HemiHomo.Count(data,9)
-    tier2 <- rbind(tier2,Filter.for.tier2(data))
-    tier2 <- cbind(tier2, HGVSg(tier2))
-}
+data <- Filter.by.Denovo.Flag(dnm.data,'NEWLY HOMOZYGOUS', strict = TRUE)  
+hom <- Filter.for.homozygous(data)
+data <- Filter.by.Denovo.Flag(dnm.data,'NEWLY HOMOZYGOUS', strict = FALSE)  
+data <- Filter.by.HemiHomo.Count(data,9)
+tier2 <- rbind(tier2,Filter.for.tier2(data))
+tier2 <- cbind(tier2, HGVSg(tier2))
+
 hom <- cbind(hom, HGVSg(hom))
 write.csv(hom[,!names(hom) %in% c("PGM.Info")], file = "homozygous.csv")
 write.csv(tier2[,!names(tier2) %in% c("PGM.Info")], file = "tier2.csv")
 
-browser()
-if(opt$nontrio | opt$nochet){
-    chet<-dnm.data[which(dnm.data$Genotype == "empty"),]
-    tier2.chet<-dnm.data[which(dnm.data$Genotype == "empty"),]
-}else{
 #Filtering CHET and merging additional annotations to table for both variants
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$cmphet," --append_file ",opt$cmphet, ".vep --force_append"),wait=T)}
 chet.data = read.csv(paste0(opt$cmphet,".vep"),na.strings="NA") 
@@ -342,7 +320,7 @@ tier2.chet <- rbind(tier2.chet, Filter.for.tier2(data,T))
 colnames(tier2.chet) <- gsub("\\.\\.\\.([12]).",".\\1",colnames(tier2.chet))
 tier2.chet <- cbind(tier2.chet, HGVSg(tier2.chet,1), HGVSg(tier2.chet,2))
 write.csv(tier2.chet[,!names(chet) %in% c("PGM.Info.1","PGM.Info.2")], file = "tier2.compound.heterozygote.csv")
-}
+
 
 if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$ptm," --append_file ",opt$ptm, ".vep --force_append"),wait=T)}
 #Tier 1 Parental mosaic 
@@ -386,8 +364,10 @@ data <- Filter.by.Allele.Count(tnt.data,5)
 kv <- Filter.for.tier2.pdnm.kv(data)
 data <- Filter.by.Allele.Count(tnt.data,5)
 t2lof <- Filter.for.tier2.pdnm.lof(data)
+CVExact <- Filter.for.ClinVarExact(tnt.data)
 write.csv(kv,file = "kvTNT.csv")
-write.csv(t2lof, file = "t2lof.csv")
+write.csv(t2lof, file = "TNTlof.csv")
+write.csv(CVExact, file = "TNTclinvar_exact.csv")
 
 #Add trioNonTrio sheet 
 #Merging additional annotations to table
@@ -415,47 +395,40 @@ pt <- rbind(pt,Filter.for.tier2.pdnm.lof(data))
 #Create workbook and sheets
 outwb <- createWorkbook()
 sum.sheet <- createSheet(outwb, sheetName = "Summary")
-if(!opt$nontrio){
-    dnm.sheet <- createSheet(outwb, sheetName = "DNM")
-    hem.sheet <- createSheet(outwb, sheetName = "HEM")
-    hom.sheet <- createSheet(outwb, sheetName = "HOM")
-    chet.sheet <- createSheet(outwb, sheetName = "CHET")
-    tier2.sheet <- createSheet(outwb, sheetName = "Tier 2")
-    tier2.chet.sheet <- createSheet(outwb, sheetName = "Tier 2(CHET)")
-    kv.sheet <- createSheet(outwb, sheetName = "TNT KV")
-    t2lof.sheet <- createSheet(outwb, sheetName = "TNT LoF")
-    ptm.sheet <- createSheet(outwb, sheetName = "Ptl MSC")
-    pt.sheet <- createSheet(outwb, sheetName = "Parent")
-    dnmCellBlock <- CellBlock(dnm.sheet,1,1,dim(dnm)[1]+1,dim(dnm)[2])
-    hemCellBlock <- CellBlock(hem.sheet,1,1,dim(hem)[1]+1,dim(hem)[2])
-    homCellBlock <- CellBlock(hom.sheet,1,1,dim(hom)[1]+1,dim(hom)[2])
-    chetCellBlock <- CellBlock(chet.sheet,1,1,dim(chet)[1]+1,dim(chet)[2])
-    tier2CellBlock <- CellBlock(tier2.sheet,1,1,dim(tier2)[1]+1,dim(tier2)[2])
-    tier2ChetCellBlock <- CellBlock(tier2.chet.sheet,1,1,dim(tier2.chet)[1]+1,dim(tier2.chet)[2])
-    kvCellBlock <- CellBlock(kv.sheet,1,1,dim(kv)[1]+1,dim(kv)[2])
-    t2lofCellBlock <- CellBlock(t2lof.sheet,1,1,dim(t2lof)[1]+1,dim(t2lof)[2])
-    ptmCellBlock <- CellBlock(ptm.sheet,1,1,dim(ptm)[1]+1,dim(ptm)[2])
-    ptCellBlock <- CellBlock(pt.sheet,1,1,dim(pt)[1]+1,dim(pt)[2])
-    addDataFrame(dnm, dnm.sheet, row.names=F, showNA=F)
-    addDataFrame(hem, hem.sheet, row.names=F, showNA=F)
-    addDataFrame(hom, hom.sheet, row.names=F, showNA=F)
-    addDataFrame(chet, chet.sheet, row.names=F, showNA=F)
-    addDataFrame(tier2, tier2.sheet, row.names=F, showNA=F)
-    addDataFrame(tier2.chet, tier2.chet.sheet, row.names=F, showNA=F)
-    addDataFrame(kv, kv.sheet, row.names=F, showNA=F)
-    addDataFrame(t2lof, t2lof.sheet, row.names=F, showNA=F)
-    addDataFrame(ptm, ptm.sheet, row.names=F, showNA=F)
-    addDataFrame(pt, pt.sheet, row.names=F, showNA=F)
-}else{
-    dnm.sheet <- createSheet(outwb, sheetName = "pDNM")
-    hem.sheet <- createSheet(outwb, sheetName = "pHEM")
-    hom.sheet <- createSheet(outwb, sheetName = "pHOM")
-    chet.sheet <- createSheet(outwb, sheetName = "pCHET")
-    addDataFrame(pdnm, dnm.sheet, row.names=F, showNA=F)
-    addDataFrame(hem, hem.sheet, row.names=F, showNA=F)
-    addDataFrame(hom, hom.sheet, row.names=F, showNA=F)
-    addDataFrame(pchet, chet.sheet, row.names=F, showNA=F)
-}
+dnm.sheet <- createSheet(outwb, sheetName = "DNM")
+hem.sheet <- createSheet(outwb, sheetName = "HEM")
+hom.sheet <- createSheet(outwb, sheetName = "HOM")
+chet.sheet <- createSheet(outwb, sheetName = "CHET")
+tier2.sheet <- createSheet(outwb, sheetName = "Tier 2")
+tier2.chet.sheet <- createSheet(outwb, sheetName = "Tier 2(CHET)")
+kv.sheet <- createSheet(outwb, sheetName = "TNT KV")
+t2lof.sheet <- createSheet(outwb, sheetName = "TNT LoF")
+CVExact.sheet <- createSheet(outwb, sheetName = "CV Exact")
+ptm.sheet <- createSheet(outwb, sheetName = "Ptl MSC")
+pt.sheet <- createSheet(outwb, sheetName = "Parent")
+dnmCellBlock <- CellBlock(dnm.sheet,1,1,dim(dnm)[1]+1,dim(dnm)[2])
+hemCellBlock <- CellBlock(hem.sheet,1,1,dim(hem)[1]+1,dim(hem)[2])
+homCellBlock <- CellBlock(hom.sheet,1,1,dim(hom)[1]+1,dim(hom)[2])
+chetCellBlock <- CellBlock(chet.sheet,1,1,dim(chet)[1]+1,dim(chet)[2])
+tier2CellBlock <- CellBlock(tier2.sheet,1,1,dim(tier2)[1]+1,dim(tier2)[2])
+tier2ChetCellBlock <- CellBlock(tier2.chet.sheet,1,1,dim(tier2.chet)[1]+1,dim(tier2.chet)[2])
+kvCellBlock <- CellBlock(kv.sheet,1,1,dim(kv)[1]+1,dim(kv)[2])
+t2lofCellBlock <- CellBlock(t2lof.sheet,1,1,dim(t2lof)[1]+1,dim(t2lof)[2])
+CVExactCellBlock <- CellBlock(CVExact.sheet,1,1,dim(CVExact)[1]+1,dim(CVExact)[2])
+ptmCellBlock <- CellBlock(ptm.sheet,1,1,dim(ptm)[1]+1,dim(ptm)[2])
+ptCellBlock <- CellBlock(pt.sheet,1,1,dim(pt)[1]+1,dim(pt)[2])
+addDataFrame(dnm, dnm.sheet, row.names=F, showNA=F)
+addDataFrame(hem, hem.sheet, row.names=F, showNA=F)
+addDataFrame(hom, hom.sheet, row.names=F, showNA=F)
+addDataFrame(chet, chet.sheet, row.names=F, showNA=F)
+addDataFrame(tier2, tier2.sheet, row.names=F, showNA=F)
+addDataFrame(tier2.chet, tier2.chet.sheet, row.names=F, showNA=F)
+addDataFrame(kv, kv.sheet, row.names=F, showNA=F)
+addDataFrame(t2lof, t2lof.sheet, row.names=F, showNA=F)
+addDataFrame(CVExact, CVExact.sheet, row.names=F, showNA=F)
+addDataFrame(ptm, ptm.sheet, row.names=F, showNA=F)
+addDataFrame(pt, pt.sheet, row.names=F, showNA=F)
+
 
 
 #LoFd <- read.table(opt$LoFd,header=T)
@@ -480,35 +453,34 @@ Ndnm <- length(which(dnm$Sample.Name==samp))
 Nhem <- length(which(hem$Sample.Name==samp))
 Nhom <- length(which(hom$Sample.Name==samp))
 Nchet <- length(which(chet$Sample.Name.1==samp))
-if(opt$nontrio){
-    Ndnm <- length(which(pdnm$Sample.Name==samp))
-    Nchet <- length(which(pchet$Sample.Name.1==samp))
-}
 
 samp.dnm.tierOne <- dnm[which(dnm$Sample.Name==samp),]
 samp.hom.tierOne <- hom[which(hom$Sample.Name==samp),]
 samp.hem.tierOne <- hem[which(hem$Sample.Name==samp),]
 samp.chet.tierOne <- chet[which(chet$Sample.Name.1==samp),]
 samp.tierTwo <- tier2[which(tier2$Sample.Name==samp),]
+samp.tier2.chet <- tier2.chet[which(tier2.chet$Sample.Name.1==samp),]
 samp.kv <- kv[which(kv$Sample.Name==samp),]
 samp.t2lof <- t2lof[which(t2lof$Sample.Name==samp),]
-samp.ptm <- t2lof[which(ptm$Sample.Name..child.==samp),]
+samp.CVExact <- CVExact[which(CVExact$Sample.Name==samp),]
 samp.kv.genes <- unique(c(as.vector(kv[which(kv$Sample.Name==samp),]$Gene.Name)))
 samp.t2lof.genes <- unique(c(as.vector(t2lof[which(t2lof$Sample.Name==samp),]$Gene.Name)))
+samp.CVExact.genes <- unique(c(as.vector(CVExact[which(CVExact$Sample.Name==samp),]$Gene.Name)))
 samp.ptm.genes <- unique(c(as.vector(ptm[which(ptm$Sample.Name..child.==samp),]$Gene.Name)))
-
 
 if(opt$summary){
     writeSummary(samp.dnm.tierOne,samp.hom.tierOne,samp.hem.tierOne,samp.chet.tierOne,samp.tierTwo,dirname(opt$out))
-    writeNonTrioSummary(samp.kv,samp.t2lof,dir=dirname(opt$out))    
+    writeNonTrioSummary(samp.kv,samp.t2lof,samp.CVExact,dir=dirname(opt$out))    
     }
 #Add new variant/genotype type
 samp.dnm.tierOne$Gene.Name <- lapply(samp.dnm.tierOne$Gene.Name,function(x){paste0(gsub("'","",x),"(DN)")})
 samp.hom.tierOne$Gene.Name <- lapply(samp.hom.tierOne$Gene.Name,function(x){paste0(gsub("'","",x),"(HO)")})
 samp.hem.tierOne$Gene.Name <- lapply(samp.hem.tierOne$Gene.Name,function(x){paste0(gsub("'","",x),"(HE)")})
 samp.chet.tierOne$Gene.Name.1 <- lapply(samp.chet.tierOne$Gene.Name.1,function(x){paste0(gsub("'","",x),"(CH)")})
+samp.tier2.chet$Gene.Name.1 <- lapply(samp.tier2.chet$Gene.Name.1,function(x){paste0(gsub("'","",x),"(CH)")})
 samp.kv.genes <- lapply(samp.kv.genes,function(x){paste0(gsub("'","",x),"(KV)")})
 samp.t2lof.genes <- lapply(samp.t2lof.genes,function(x){paste0(gsub("'","",x),"(HI)")})
+samp.CVExact.genes <- lapply(samp.CVExact.genes,function(x){paste0(gsub("'","",x),"(CE)")})
 samp.ptm.genes <- lapply(samp.ptm.genes,function(x){paste0(gsub("'","",x),"(PM)")})
 
 #if(samp == "diagseq270f100"){browser()}
@@ -686,13 +658,12 @@ samp.gcClinicalOMIM <- unique(gsub("'","",c(as.vector(samp.dnm.tierOne[which(!is
 samp.gcClinicalnonOMIM <- unique(gsub("'","",c(as.vector(samp.hzo),as.vector(samp.hze),as.vector(samp.hz),as.vector(samp.LoF))))
 samp.gcClinicalnonOMIM <- c(samp.gcClinicalnonOMIM[!samp.gcClinicalnonOMIM %in% samp.gcClinicalOMIM],"-")
 
-if(opt$nontrio){samp.tier2gcClinicalOMIM=""}
-else{
-samp.tier2gcClinicalOMIM <- unique(gsub("'","",c(as.vector(tier2[which(tier2$Sample.Name==samp),][which(!is.na(tier2[which(tier2$Sample.Name==samp),]$OMIM.Disease)),]$Gene.Name),as.vector(tier2.chet[which(tier2.chet$Sample.Name.1==samp),][which(!is.na(tier2.chet[which(tier2.chet$Sample.Name.1==samp),]$OMIM.Disease.1)),]$Gene.Name.1))))
-samp.tier2gcClinicalOMIM <- c(samp.tier2gcClinicalOMIM[!samp.tier2gcClinicalOMIM %in% samp.gcClinicalOMIM],"-")
-samp.tier2gcClinicalOMIM <- c(samp.tier2gcClinicalOMIM[!samp.tier2gcClinicalOMIM %in% samp.gcClinicalnonOMIM],"-")
-}
-sum <- rbind(sum,c(samp,Ndnm,Nhem,Nhom,Nchet,"",paste(samp.hze,collapse="\n"),paste(samp.hzo,collapse="\n"),paste(samp.clin,collapse="\n"),paste(samp.LoF,collapse="\n"),gsub("^\n*([^)]*\\)?)\n*$","\\1",paste(samp.KnownVar,collapse="\n")),"","",wrapFormat(samp.gcClinicalOMIM),wrapFormat(samp.gcClinicalnonOMIM),wrapFormat(samp.tier2gcClinicalOMIM),wrapFormat(c(paste(gsub("'","",samp.kv.genes)),paste(gsub("'","",samp.t2lof.genes)),paste(gsub("'","",samp.ptm.genes)),"-"))))
+browser()
+samp.tier2gcClinicalOMIM <- unique(gsub("'","",c(as.vector(samp.tierTwo[which(!is.na(samp.tierTwo$OMIM.Disease)),]$Gene.Name),as.vector(samp.tier2.chet[which(!is.na(samp.tier2.chet$OMIM.Disease.1)),]$Gene.Name.1))))
+#samp.tier2gcClinicalOMIM <- c(samp.tier2gcClinicalOMIM[!samp.tier2gcClinicalOMIM %in% samp.gcClinicalOMIM],"-")
+#samp.tier2gcClinicalOMIM <- c(samp.tier2gcClinicalOMIM[!samp.tier2gcClinicalOMIM %in% samp.gcClinicalnonOMIM],"-")
+
+sum <- rbind(sum,c(samp,Ndnm,Nhem,Nhom,Nchet,"",paste(samp.hze,collapse="\n"),paste(samp.hzo,collapse="\n"),paste(samp.clin,collapse="\n"),paste(samp.LoF,collapse="\n"),gsub("^\n*([^)]*\\)?)\n*$","\\1",paste(samp.KnownVar,collapse="\n")),"","",wrapFormat(samp.gcClinicalOMIM),wrapFormat(samp.gcClinicalnonOMIM),wrapFormat(samp.tier2gcClinicalOMIM),wrapFormat(c(paste(gsub("'","",samp.kv.genes)),paste(gsub("'","",samp.t2lof.genes)),paste(gsub("'","",samp.CVExact.genes)),paste(gsub("'","",samp.ptm.genes)),"-"))))
 }
 
 #Add in samples with no tier1/2 variants
@@ -787,14 +758,15 @@ createFreezePane(kv.sheet,2,5)
 highlightCCDSx(kv,kvCellBlock)
 createFreezePane(t2lof.sheet,2,5)
 highlightCCDSx(t2lof,t2lofCellBlock)
+createFreezePane(CVExact.sheet,2,5)
+highlightCCDSx(t2lof,t2lofCellBlock)
 createFreezePane(ptm.sheet,2,5)
 highlightCCDSx(ptm,ptmCellBlock)
-if(!opt$nontrio){
 createFreezePane(tier2.sheet,2,5)
 createFreezePane(tier2.chet.sheet,2,6)
 addAutoFilter(tier2.sheet,paste0("A:",excelColumn(dim(tier2)[2])))
 addAutoFilter(tier2.chet.sheet,paste0("A:",excelColumn(dim(tier2.chet)[2])))
-}
+
 
 saveWorkbook(outwb, opt$out)
 closeAllConnections()
