@@ -10,7 +10,7 @@ while read line; do
         prepid=$(mysql --defaults-group-suffix=sequencedragen --defaults-file=/nfs/goldstein/software/Bioinformatics_Tools/generateVariantReport/.my.cnf -e "select pseudo_prepid from dragen_sample_metadata where dragen_sample_metadata.sample_name = '$line' ;" |head -n2|tail -n1|sed 's/_temp[0-9]\?/18/')
         alignLoc=$(mysql --defaults-group-suffix=sequencedragen --defaults-file=/nfs/goldstein/software/Bioinformatics_Tools/generateVariantReport/.my.cnf -e "select AlignSeqFileLoc from dragen_qc_metrics inner join dragen_sample_metadata on dragen_sample_metadata.pseudo_prepid = dragen_qc_metrics.pseudo_prepid where dragen_sample_metadata.sample_name = '$line' ;" |head -n2|tail -n1|sed 's/_temp[0-9]\?/18/')/${line}.${prepid}/${line}.${prepid}.realn.recal.bam
     
-        echo $alignLoc
+        if [ ! -z $prepid ];then echo $alignLoc;fi
     #if [ $alignLoc == "NULL" ];then echo $tmp
     #elif [[ -f $tmp ]];then echo $tmp
     #else echo "$(dirname $tmp)/$(basename $(readlink $tmp))";fi
