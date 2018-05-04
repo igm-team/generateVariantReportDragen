@@ -658,7 +658,6 @@ samp.gcClinicalOMIM <- unique(gsub("'","",c(as.vector(samp.dnm.tierOne[which(!is
 samp.gcClinicalnonOMIM <- unique(gsub("'","",c(as.vector(samp.hzo),as.vector(samp.hze),as.vector(samp.hz),as.vector(samp.LoF))))
 samp.gcClinicalnonOMIM <- c(samp.gcClinicalnonOMIM[!samp.gcClinicalnonOMIM %in% samp.gcClinicalOMIM],"-")
 
-browser()
 samp.tier2gcClinicalOMIM <- unique(gsub("'","",c(as.vector(samp.tierTwo[which(!is.na(samp.tierTwo$OMIM.Disease)),]$Gene.Name),as.vector(samp.tier2.chet[which(!is.na(samp.tier2.chet$OMIM.Disease.1)),]$Gene.Name.1))))
 #samp.tier2gcClinicalOMIM <- c(samp.tier2gcClinicalOMIM[!samp.tier2gcClinicalOMIM %in% samp.gcClinicalOMIM],"-")
 #samp.tier2gcClinicalOMIM <- c(samp.tier2gcClinicalOMIM[!samp.tier2gcClinicalOMIM %in% samp.gcClinicalnonOMIM],"-")
