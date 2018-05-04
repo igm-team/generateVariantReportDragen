@@ -133,7 +133,7 @@ writeSummary <- function(dnm,hom,hem,chet,tier2,dir){
     return
 }
 
-writeNonTrioSummary <- function(samp.kv,samp.kv5 = samp.kv[FALSE,],samp.pdnm = samp.kv[FALSE,],samp.prec = samp.kv[FALSE,],samp.pchet = samp.kv[FALSE,],samp.lofd = samp.kv[FALSE,],dir=dir){
+writeNonTrioSummary <- function(samp.kv,samp.kv5 = samp.kv[FALSE,],samp.pdnm = samp.kv[FALSE,],samp.prec = samp.kv[FALSE,],samp.pchet = samp.kv[FALSE,],samp.lofd = samp.kv[FALSE,],samp.CVExact = samp.kv[FALSE,],dir=dir){
     dir.create(file.path(dir,"Sample_Summaries"),showWarnings=F)
     allSamps <- c(as.vector(samp.kv$Sample.Name),as.vector(samp.kv5$Sample.Name),as.vector(samp.pdnm$Sample.Name),as.vector(samp.prec$Sample.Name),as.vector(samp.pchet$Sample.Name))
     if(length(allSamps) == 0){return}
@@ -146,6 +146,7 @@ writeNonTrioSummary <- function(samp.kv,samp.kv5 = samp.kv[FALSE,],samp.pdnm = s
     if(dim(samp.prec)[1] > 0){writeDNM(samp.prec,rtf)}
     if(dim(samp.pchet)[1] > 0){writeDNM(samp.pchet,rtf)}
     if(dim(samp.lofd)[1] > 0){writeDNM(samp.lofd,rtf)}
+    if(dim(samp.CVExact)[1] > 0){writeDNM(samp.CVExact,rtf)}
     done(rtf)
     return
 }
