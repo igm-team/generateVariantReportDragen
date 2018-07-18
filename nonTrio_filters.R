@@ -20,7 +20,7 @@ normalized.name <- function(names) {
 }
 
 Filter.by.Effect <- function(x) {
-return ((x=="stop_gained") | (x =="stop_lose") | (x =="start_lost")
+return ((x=="stop_gained") | (x =="stop_lost") | (x =="start_lost")
       | (x=="frameshift_variant") | (x== "splice_donor_variant") | (x=="splice_acceptor_variant") |   (x=="exon_loss_variant"))
 }
 
