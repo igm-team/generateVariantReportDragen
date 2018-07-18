@@ -391,6 +391,8 @@ data <- Filter.by.Allele.Count(pt.data,5)
 pt <- Filter.for.tier2.pdnm.kv(data)
 data <- Filter.by.Allele.Count(pt.data,5)
 pt <- rbind(pt,Filter.for.tier2.pdnm.lof(data))
+pt <- rbind(pt,Filter.for.ClinVarExact(pt.data))
+
 
 #Create workbook and sheets
 outwb <- createWorkbook()
@@ -678,7 +680,7 @@ if(opt$pheno != "NULL"){
     for(i in 1:dim(sum)[1]){
         samp <- sum[i,1]
         sampPheno <- pheno[which(pheno$CHGVID == samp),]$DetailedPhenotype[1]
-        if(sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype[1]}
+        if(is.na(sampPheno) | sampPheno == "NULL" | sampPheno == "" | sampPheno == "None"){ sampPheno <- pheno[which(pheno$CHGVID == samp),]$BroadPhenotype[1]}
         sum[i,13] <- as.vector(sampPheno)
     }
 }
