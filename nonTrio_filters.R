@@ -542,10 +542,14 @@ Filter.for.ClinVarExact <- function(data) {
   #make sure all columns are present
   if(!(length(setdiff(normalized.name(columns),colnames(data))) ==0)){stop("Columns missing at ClinVar Exact")}
   #Exclusion rule 2:
+  if (dim(data)[1] ==0) { return(data)}
   Index <- is.na(data[normalized.name("ExAC global af")]) | data[normalized.name("ExAC global af")] < 0.01
   data <- data[Index,]
+  if (dim(data)[1] ==0) { return(data)}
+  
 
   #Exclusion rule 3:
+  if (dim(data)[1] ==0) { return(data)}
   suppressWarnings(temp <- sapply(data[normalized.name("MQ")], as.numeric))
   temp[is.na(temp)] <- 0
   ER31 <- temp < 40
