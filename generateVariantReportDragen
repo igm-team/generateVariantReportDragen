@@ -200,6 +200,7 @@ make_option(c("-o","--out"), type="character", default="variant_report.xlsx", he
 make_option(c("-m","--mgi"), type="character", default=paste(scriptPath,"/MGI_essential.txt",sep=""), help="MGI essiential gene list [default  = <Script Path>/MGI_essential.txt]", dest="MGIe"),
 make_option(c("-s","--summary"), type="logical", default=F, action="store_true", help="Flag to generate individual sample text summaries [default  = False"),
 make_option(c("-p","--pheno"), type="character", default="NULL", help="seqDB file containing sample phenotypes [default  = NULL]"),
+make_option(c("--denovoIGV"), type="character", default="NULL", help="Filtered denovo csv with variants marked as FALSE if they fail visual IGV inspection [default  = NULL]"),
 make_option(c("--noIGV"), type="logical", default=F, action="store_true", help="Flag to resuse existing IGV batch script files and skip generating [default  = False]"),
 make_option(c("--noVEP"), type="logical", default=F, action="store_true", help="Flag to resuse existing VEP output files and skip running VEP [default  = False]")
 )
@@ -239,11 +240,19 @@ data <- Filter.by.Allele.Count(data,19)
 tier2 <- Filter.for.tier2(data,is.denovo=F)
 
 dnm <- cbind(dnm,HGVSg(dnm))
+if(opt$denovoIGV != "NULL"){
+    newdnm <- read.csv(opt$denovoIGV,na.strings="NA")
+    if(dim(newdnm[1]) != dim(dnm[1]))stop("denovoIGV file does not have same number of variants.  Is this the same analysis")
+    igvcol <- grep("IGV",colnames(newdnm))
+    dnm <- newdnm[which(newdnm[,igvcol]!=F),]
+    }
 #Make IGV batch script
-IGV_dir = file.path(dirname(opt$out),"IGV")
-dir.create(IGV_dir,showWarnings=F)
-write.table(gsub("'","",as.matrix(dnm[,c("Family.ID","Sample.Name","Mother","Father","Denovo.Flag","Variant.ID","Gene.Name")])),file=file.path(IGV_dir,"dnm.IGV.txt"),quote=F,row.names=F,sep="\t")
-if(!opt$noVEP){system(paste0(scriptPath,"/makeIGVbatch_dragen.sh ",file.path(IGV_dir,"dnm.IGV.txt")," 2>&1 >",file.path(IGV_dir,"dnm.IGV.log")),ignore.stderr=T,wait=F)}
+    if(!opt$noIGV & opt$denovoIGV == "NULL"){
+    IGV_dir = file.path(dirname(opt$out),"IGV")
+    dir.create(IGV_dir,showWarnings=F)
+    write.table(gsub("'","",as.matrix(dnm[,c("Family.ID","Sample.Name","Mother","Father","Denovo.Flag","Variant.ID","Gene.Name")])),file=file.path(IGV_dir,"dnm.IGV.txt"),quote=F,row.names=F,sep="\t")
+    if(!opt$noVEP){system(paste0(scriptPath,"/makeIGVbatch_dragen.sh ",file.path(IGV_dir,"dnm.IGV.txt")," 2>&1 >",file.path(IGV_dir,"dnm.IGV.log")),ignore.stderr=T,wait=F)}
+}
 
 write.csv(dnm[,!names(dnm) %in% c("PGM.Info")], file = "denovo.csv")
 
@@ -348,7 +357,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$tnt," --append_
 tnt.data = read.csv(paste0(opt$tnt,".vep"),na.strings="NA")
 tnt.data <- cbind(tnt.data, gsub("'","",tnt.data$Gene.Name) %in% MGIe$Gene_symbol)
 colnames(tnt.data)[dim(tnt.data)[2]] <- "MGI.Essential"
-tnt.data <- cbind(tnt.data, paste0(tnt.data$Variant.ID,"\nnonTrio\n",tnt.data$HGVSc,"\n",tnt.data$HGVSp,"\n",tnt.data$Samtools.Raw.Coverage,"\n",tnt.data$Percent.Read.Alt,"\n",tnt.data$Genotype.Qual.GQ))
+tnt.data <- cbind(tnt.data, paste0(tnt.data$Variant.ID,"\n",tnt.data$Denovo.Flag,"\n",tnt.data$HGVSc,"\n",tnt.data$HGVSp,"\n",tnt.data$DP,"\n",tnt.data$Percent.Alt.Read,"\n",tnt.data$GQ))
 colnames(tnt.data)[dim(tnt.data)[2]] <- "PGM.Info"
 col.id <- grep("Sample.Name",colnames(tnt.data))
 new.pos <- 1
