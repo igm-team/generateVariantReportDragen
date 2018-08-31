@@ -159,6 +159,7 @@ data <- Filter.by.Allele.Count(pt.data,5)
 pt <- Filter.for.tier2.pdnm.kv(data)
 data <- Filter.by.Allele.Count(pt.data,5)
 pt <- rbind(pt,Filter.for.tier2.pdnm.lof(data))
+pt <- rbind(pt,Filter.for.ClinVarExact(pt.data))
 
 #Create workbook and sheets
 outwb <- createWorkbook()
