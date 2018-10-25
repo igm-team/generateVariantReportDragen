@@ -239,12 +239,13 @@ data <- Filter.by.Denovo.Flag(dnm.data,'DE NOVO', strict = FALSE)
 data <- Filter.by.Allele.Count(data,19)
 tier2 <- Filter.for.tier2(data,is.denovo=F)
 
-dnm <- cbind(dnm,HGVSg(dnm))
 if(opt$denovoIGV != "NULL"){
     newdnm <- read.csv(opt$denovoIGV,na.strings="NA")
-    if(dim(newdnm[1]) != dim(dnm[1]))stop("denovoIGV file does not have same number of variants.  Is this the same analysis")
+    if(dim(newdnm)[1] != dim(dnm)[1])stop("denovoIGV file does not have same number of variants.  Is this the same analysis")
     igvcol <- grep("IGV",colnames(newdnm))
     dnm <- newdnm[which(newdnm[,igvcol]!=F),]
+    dnm <- cbind(dnm, paste0(dnm$Variant.ID,"\n",dnm$Denovo.Flag,"\n",dnm$HGVSc,"\n",dnm$HGVSp,"\n",dnm$DP,"\n",dnm$Percent.Alt.Read,"\n",dnm$GQ))
+    colnames(dnm)[dim(dnm)[2]] <- "PGM.Info"
     }
 #Make IGV batch script
     if(!opt$noIGV & opt$denovoIGV == "NULL"){
@@ -265,7 +266,6 @@ data <- rbind(data,Filter.by.Denovo.Flag(dnm.data,'COMPOUND DELETION', strict = 
 data <- Filter.by.HemiHomo.Count(data,9)
 tier2 <- rbind(tier2,Filter.for.tier2(data))
 
-hem <- cbind(hem, HGVSg(hem))
 write.csv(hem[,!names(hem) %in% c("PGM.Info")], file = "hemizygous.csv")
 
 #homozygous
@@ -274,9 +274,7 @@ hom <- Filter.for.homozygous(data)
 data <- Filter.by.Denovo.Flag(dnm.data,'NEWLY HOMOZYGOUS', strict = FALSE)  
 data <- Filter.by.HemiHomo.Count(data,9)
 tier2 <- rbind(tier2,Filter.for.tier2(data))
-tier2 <- cbind(tier2, HGVSg(tier2))
 
-hom <- cbind(hom, HGVSg(hom))
 write.csv(hom[,!names(hom) %in% c("PGM.Info")], file = "homozygous.csv")
 write.csv(tier2[,!names(tier2) %in% c("PGM.Info")], file = "tier2.csv")
 
@@ -316,10 +314,6 @@ colnames(chet) <- gsub("\\.\\.\\.([12]).",".\\1",colnames(chet))
 colnames(poschet) <- gsub("\\.\\.\\.([12]).",".\\1",colnames(poschet))
 colnames(dnmchet) <- gsub("\\.\\.\\.([12]).",".\\1",colnames(poschet))
 
-chet <- cbind(chet, HGVSg(chet,1), HGVSg(chet,2))
-poschet <- cbind(poschet, HGVSg(poschet,1), HGVSg(poschet,2))
-dnmchet <- cbind(dnmchet, HGVSg(dnmchet,1), HGVSg(dnmchet,2))
-
 write.csv(chet[,!names(chet) %in% c("PGM.Info.1","PGM.Info.2")], file = "compound.heterozygote.csv")
 write.csv(poschet[,!names(poschet) %in% c("PGM.Info.1","PGM.Info.2")], file = "possible.compound.heterozygote.csv")
 write.csv(dnmchet[,!names(dnmchet) %in% c("PGM.Info.1","PGM.Info.2")], file = "denovo.compound.heterozygote.csv")
@@ -327,7 +321,6 @@ chet <- rbind(chet,poschet,dnmchet)
 data <- Filter.by.HemiHomo.Count(data,9,T)
 tier2.chet <- rbind(tier2.chet, Filter.for.tier2(data,T))
 colnames(tier2.chet) <- gsub("\\.\\.\\.([12]).",".\\1",colnames(tier2.chet))
-tier2.chet <- cbind(tier2.chet, HGVSg(tier2.chet,1), HGVSg(tier2.chet,2))
 write.csv(tier2.chet[,!names(chet) %in% c("PGM.Info.1","PGM.Info.2")], file = "tier2.compound.heterozygote.csv")
 
 
