@@ -769,9 +769,12 @@ if (dim(data)[1] ==0) { return(data)}
 #step 1: 
 data   <- data[is.na(data[normalized.name("Percent Alt Read")])
              | data[normalized.name("Percent Alt Read")] >= 0.2 
-             | (data[normalized.name("FILTER")] == "pass"
-             &  (data[normalized.name("Variant Type")] == "snv"
-               | data[normalized.name("Percent Alt Read Binomial P")] > 0.01)),]
+             | (data[normalized.name("FILTER")] == "PASS"
+             &  ((data[normalized.name("Variant Type")] == "snv"
+             &  !(data[normalized.name("Effect")] == "synonymous_variant"
+             |  data[normalized.name("Effect")] == "splice_region_variant"))
+               | (data[normalized.name("Percent Alt Read Binomial P")] > 0.01
+               &  !data[normalized.name("Effect")] == "splice_region_variant"))),]
 if (dim(data)[1] ==0) { return(data)}
 
 #step 2: 
@@ -993,7 +996,7 @@ Filter.for.tier2 <- function(data, is.comphet = FALSE, is.denovo = FALSE) {
 if (is.comphet) {
 #check for correct columns
 columns <- c("HGMD Class (#1)","HGMD Class (#2)", "HGMD indel 9bpflanks (#1)", "HGMD indel 9bpflanks (#2)",
-             "ClinVar pathogenic indels (#1)", "ClinVar pathogenic indels (#2)", "ClinVar Clinical Significance (#1)", "ClinVar Clinical Significance (#2)",
+             "ClinVar pathogenic indels (#1)", "ClinVar pathogenic indels (#2)", "ClinVar ClinSig (#1)", "ClinVar ClinSig (#2)",
              "Effect (#1)", "Effect (#2)", "ClinGen (#1)", "ClinVar Pathogenic Indel Count (#1)", "Clinvar Pathogenic CNV Count (#1)", "ClinVar Pathogenic SNV Splice Count (#1)", "ClinVar Pathogenic SNV Nonsense Count (#1)")
 if (dim(data)[1] ==0) { return(data)}
 #make sure all columns are present
@@ -1019,11 +1022,11 @@ temp4[is.na(temp4)] <- 0
 R2 <- temp1 > 0 | temp2 > 0 | temp3 > 0 | temp4 > 0
 
 #inclusion rule 3:
-temp <- sapply(data[normalized.name("ClinVar Clinical Significance (#1)")], as.character)
+temp <- sapply(data[normalized.name("ClinVar ClinSig (#1)")], as.character)
 temp[is.na(temp)] <- "0"
 R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 
-temp <- sapply(data[normalized.name("ClinVar Clinical Significance (#2)")], as.character)
+temp <- sapply(data[normalized.name("ClinVar ClinSig (#2)")], as.character)
 temp[is.na(temp)] <- "0"
 R3 = R3 | (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 
@@ -1063,7 +1066,7 @@ R.all <- R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8
 } else {
 #check for correct columns
 columns <- c("HGMD.Class", "HGMD.indel.9bpflanks", "ClinVar.pathogenic.indels",
-             "ClinVar.Clinical.Significance", "Effect", "ClinGen",
+             "ClinVar.ClinSig", "Effect", "ClinGen",
              "ClinVar.Pathogenic.Indel.Count", "Clinvar.Pathogenic.CNV.Count", "ClinVar.Pathogenic.SNV.Splice.Count", "ClinVar.Pathogenic.SNV.Nonsense.Count")
 
 if (dim(data)[1] ==0) { return(data)}
@@ -1084,7 +1087,7 @@ temp2[is.na(temp2)] <- 0
 R2 <- temp1 > 0 | temp2 > 0
 
 #inclusion rule 3:
-temp <- sapply(data[normalized.name("ClinVar.Clinical.Significance")], as.character)
+temp <- sapply(data[normalized.name("ClinVar.ClinSig")], as.character)
 temp[is.na(temp)] <- "0"
 R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 #inclusion rule 3.1:

@@ -32,7 +32,7 @@ Filter.by.Effect.exclude <- function(x) {
 Filter.for.tier2.general <- function(data) {
 
   #check for correct columns
-  columns <- c("HGMD Class","ClinVar Clinical Significance",
+  columns <- c("HGMD Class","ClinVar ClinSig",
                "Effect","HGMD indel 9bpflanks","ClinVar pathogenic indels",
                "ClinGen","ClinVar Pathogenic Indel Count",
                "Clinvar Pathogenic CNV Count","ClinVar Pathogenic SNV Splice Count",
@@ -47,7 +47,7 @@ Filter.for.tier2.general <- function(data) {
   R1 <- sapply(R1, function(x) length(grep("DM",x)) > 0)
 
   #inclusion rule 2:
-  temp <- sapply(data[normalized.name("ClinVar Clinical Significance")], as.character)
+  temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
   R2 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 
@@ -173,7 +173,7 @@ Filter.for.tier2.pdnm.kv <- function(data) {
   columns <- c("ExAC global gts","MQ", "QD", "Qual","DP",
                "Percent Alt Read","Effect", "HGMD Class", "HGMDm2site",
                "HGMDm1site", "HGMDp1site", "HGMDp2site", "HGMD indel 9bpflanks", "ClinVar pathogenic indels",
-               "ClinVar Clinical Significance"
+               "ClinVar ClinSig"
   )
   #make sure all columns are present
   if(!(length(setdiff(normalized.name(columns),colnames(data))) ==0)){stop("Columns missing at tier 2 pdnm kv")}
@@ -239,7 +239,7 @@ Filter.for.tier2.pdnm.kv <- function(data) {
   R3 <- R31 | R32
 
   #inclusion rule 4:
-  temp <- sapply(data[normalized.name("ClinVar Clinical Significance")], as.character)
+  temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
   R4 = (temp == "Pathogenic") | (temp == "Likely Pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 
@@ -252,7 +252,7 @@ Filter.for.tier2.pdnm.lof <- function(data) {
 
   #check for correct columns
   columns <- c("Effect", "HGMD Class", "HGMD indel 9bpflanks", "ClinVar pathogenic indels",
-               "ClinVar Clinical Significance","ClinGen", "ClinVar Pathogenic Indel Count",
+               "ClinVar ClinSig","ClinGen", "ClinVar Pathogenic Indel Count",
                "ClinVar Pathogenic SNV Splice Count","ClinVar Pathogenic SNV Nonsense Count",
                "Clinvar Pathogenic CNV Count")
 
@@ -286,7 +286,7 @@ Filter.for.tier2.pdnm.lof <- function(data) {
   R2 <- R21 | R22
 
   #inclusion rule 3:
-  temp <- sapply(data[normalized.name("ClinVar Clinical Significance")], as.character)
+  temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
   R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 
@@ -321,7 +321,7 @@ Filter.for.tier2.pdnm.lof.depl <- function(data) {
 
   #check for correct columns
   columns <- c("Effect", "HGMD Class", "HGMD indel 9bpflanks", "ClinVar pathogenic indels",
-               "ClinVar Clinical Significance","ClinGen", "ClinVar Pathogenic Indel Count",
+               "ClinVar ClinSig","ClinGen", "ClinVar Pathogenic Indel Count",
                "ClinVar Pathogenic SNV Splice Count","ClinVar Pathogenic SNV Nonsense Count",
                "Clinvar Pathogenic CNV Count")
 
@@ -452,7 +452,7 @@ Filter.for.tier2.prec.kv.lof <- function(data) {
 
   #check for correct columns
   columns <- c("GT","Effect", "HGMD Class", "HGMD indel 9bpflanks", "ClinVar pathogenic indels",
-               "ClinVar Clinical Significance","ClinGen", "ClinVar Pathogenic Indel Count",
+               "ClinVar ClinSig","ClinGen", "ClinVar Pathogenic Indel Count",
                "ClinVar Pathogenic SNV Splice Count","ClinVar Pathogenic SNV Nonsense Count",
                "Clinvar Pathogenic CNV Count")
 
@@ -489,7 +489,7 @@ Filter.for.tier2.prec.kv.lof <- function(data) {
   R2 <- R21 | R22
 
   #inclusion rule 3:
-  temp <- sapply(data[normalized.name("ClinVar Clinical Significance")], as.character)
+  temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
   R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 
@@ -537,7 +537,7 @@ Filter.for.ClinVarExact <- function(data) {
   columns <- c("ExAC global gts","MQ", "QD", "Qual","DP",
                "Percent Alt Read","Effect", "HGMD Class", "HGMDm2site",
                "HGMDm1site", "HGMDp1site", "HGMDp2site", "HGMD indel 9bpflanks", "ClinVar pathogenic indels",
-               "ClinVar Clinical Significance"
+               "ClinVar ClinSig"
   )
   #make sure all columns are present
   if(!(length(setdiff(normalized.name(columns),colnames(data))) ==0)){stop("Columns missing at ClinVar Exact")}
@@ -580,7 +580,7 @@ Filter.for.ClinVarExact <- function(data) {
   data <- data[ER5,]
 
   #inclusion rule 4:
-  temp <- sapply(data[normalized.name("ClinVar Clinical Significance")], as.character)
+  temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
   R4 = (temp == "Pathogenic") | (temp == "Likely Pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
 
