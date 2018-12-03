@@ -244,7 +244,7 @@ if(opt$denovoIGV != "NULL"){
     if(dim(newdnm)[1] != dim(dnm)[1])stop("denovoIGV file does not have same number of variants.  Is this the same analysis")
     igvcol <- grep("IGV",colnames(newdnm))
     dnm <- newdnm[which(newdnm[,igvcol]!=F),]
-    dnm <- cbind(dnm, paste0(dnm$Variant.ID,"\n",dnm$Denovo.Flag,"\n",dnm$HGVSc,"\n",dnm$HGVSp,"\n",dnm$DP,"\n",dnm$Percent.Alt.Read,"\n",dnm$GQ))
+    if(dim(dnm)[1] > 0 )dnm <- cbind(dnm, paste0(dnm$Variant.ID,"\n",dnm$Denovo.Flag,"\n",dnm$HGVSc,"\n",dnm$HGVSp,"\n",dnm$DP,"\n",dnm$Percent.Alt.Read,"\n",dnm$GQ))
     colnames(dnm)[dim(dnm)[2]] <- "PGM.Info"
     }
 #Make IGV batch script
