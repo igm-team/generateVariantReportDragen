@@ -576,7 +576,7 @@ Filter.for.ClinVarExact <- function(data) {
   data <- data[ER4,]
 
   #Exclusion rule 5:
-  ER5 <- !grepl("?Site",data['ClinVar.Disease'][,])
+  ER5 <- !grepl("?Site",data['ClinVar.DiseaseName'][,])
   data <- data[ER5,]
 
   #inclusion rule 4:
