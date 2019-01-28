@@ -788,11 +788,15 @@ data <- data[(is.na(data[normalized.name("GQ")])
               | data[normalized.name("GQ")] > 20)      &
            (is.na(data[normalized.name("Qual")]) 
               | data[normalized.name("Qual")] > 50)                  &
-           (is.na(data[normalized.name("DP Bin")])
-              | data[normalized.name("DP Bin")] > 9) &
+           (is.na(data[normalized.name("DP")])
+              | data[normalized.name("DP")] > 5) &
            (is.na(data[normalized.name("Evs Filter Status")])
               | data[normalized.name("Evs Filter Status")] != "FAIL") 
           ,]
+data <- data[((is.na(data[normalized.name("QD")])
+              | data[normalized.name("QD")] > 10)      &
+              data[normalized.name("Variant Type")] == "indel") |
+              data[normalized.name("Variant Type")] == "snv",] 
 if (dim(data)[1] ==0) { return(data)}
 
 #step 3: //de novo flag is not filtered here. Which can be filtered separately
