@@ -1028,11 +1028,11 @@ R2 <- temp1 > 0 | temp2 > 0 | temp3 > 0 | temp4 > 0
 #inclusion rule 3:
 temp <- sapply(data[normalized.name("ClinVar ClinSig (#1)")], as.character)
 temp[is.na(temp)] <- "0"
-R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+R3 = (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 
 temp <- sapply(data[normalized.name("ClinVar ClinSig (#2)")], as.character)
 temp[is.na(temp)] <- "0"
-R3 = R3 | (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+R3 = R3 | (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 
 #inclusion rule 3.1:
 diseasePheno <- "congenital|developmental_disorder|intellectualDisability|epilepsy"
@@ -1093,7 +1093,7 @@ R2 <- temp1 > 0 | temp2 > 0
 #inclusion rule 3:
 temp <- sapply(data[normalized.name("ClinVar.ClinSig")], as.character)
 temp[is.na(temp)] <- "0"
-R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+R3 = (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 #inclusion rule 3.1:
 diseasePheno <- "congenital|developmental_disorder|intellectualDisability|epilepsy"
 R3 = R3 | grepl(diseasePheno,data$DenovoDB.Phenotype) 

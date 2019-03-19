@@ -49,7 +49,7 @@ Filter.for.tier2.general <- function(data) {
   #inclusion rule 2:
   temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
-  R2 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+  R2 = (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 
   Functional <- Filter.by.Effect(sapply(data[normalized.name("Effect")], as.character))
 
@@ -241,7 +241,7 @@ Filter.for.tier2.pdnm.kv <- function(data) {
   #inclusion rule 4:
   temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
-  R4 = (temp == "Pathogenic") | (temp == "Likely Pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+  R4 = (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 
   R.all <- R1 | R2 | R3 | R4
   data <- data[R.all,]
@@ -288,7 +288,7 @@ Filter.for.tier2.pdnm.lof <- function(data) {
   #inclusion rule 3:
   temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
-  R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+  R3 = (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 
   #inclusion rule 4:
   R4 <- (sapply(data[normalized.name("ClinGen")], as.character) == '1')
@@ -491,7 +491,7 @@ Filter.for.tier2.prec.kv.lof <- function(data) {
   #inclusion rule 3:
   temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
-  R3 = (temp == "Pathogenic") | (temp == "Likely pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+  R3 = (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 
 
   fun.functional <- function(x) {
@@ -582,7 +582,7 @@ Filter.for.ClinVarExact <- function(data) {
   #inclusion rule 4:
   temp <- sapply(data[normalized.name("ClinVar ClinSig")], as.character)
   temp[is.na(temp)] <- 'NA'
-  R4 = (temp == "Pathogenic") | (temp == "Likely Pathogenic") | (temp == "Pathogenic|Likely Pathogenic")
+  R4 = (grepl("^Pathogenic$",temp)) | (grepl("^Likely.Pathogenic",temp)) | (grepl("^Pathogenic.Likely.pathogenic$",temp))
 
   R.all <- R4
   data <- data[R.all,]
