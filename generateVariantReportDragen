@@ -225,7 +225,7 @@ colnames(dnm.data)[dim(dnm.data)[2]] <- "PGM.Info"
 col.id <- grep("Sample.Name",colnames(dnm.data))
 new.pos <- 2
 dnm.data <- dnm.data[,c(1:2,col.id,c((new.pos):ncol(dnm.data))[-1])]
-col.id <- grep("Gene.Name",colnames(dnm.data))
+col.id <- which(colnames(dnm.data) == "Gene.Name")
 new.pos <- 3
 dnm.data <- dnm.data[,c(2:3,col.id,c((new.pos):ncol(dnm.data))[-1])]
 col.id <- grep("Effect",colnames(dnm.data))
@@ -350,6 +350,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$tnt," --append_
 tnt.data = read.csv(paste0(opt$tnt,".vep"),na.strings="NA")
 tnt.data <- cbind(tnt.data, gsub("'","",tnt.data$Gene.Name) %in% MGIe$Gene_symbol)
 colnames(tnt.data)[dim(tnt.data)[2]] <- "MGI.Essential"
+tnt.data <- merge(tnt.data, all_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
 tnt.data <- cbind(tnt.data, paste0(tnt.data$Variant.ID,"\n",tnt.data$Denovo.Flag,"\n",tnt.data$HGVSc,"\n",tnt.data$HGVSp,"\n",tnt.data$DP,"\n",tnt.data$Percent.Alt.Read,"\n",tnt.data$GQ))
 colnames(tnt.data)[dim(tnt.data)[2]] <- "PGM.Info"
 col.id <- grep("Sample.Name",colnames(tnt.data))
@@ -357,7 +358,7 @@ new.pos <- 1
 tnt.data <- tnt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(tnt.data))[-(col.id-new.pos+1)])]
 col.id <- grep("Gene.Name",colnames(tnt.data))
 new.pos <- 3
-tnt.data <- tnt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(tnt.data))[-(col.id-new.pos+1)])]
+tnt.data <- tnt.data[,c(2:3,col.id,c((new.pos):ncol(tnt.data))[-1])]
 col.id <- grep("Effect",colnames(tnt.data))
 new.pos <- 4
 tnt.data <- tnt.data[,c(1:(new.pos-1)[-col.id],col.id,c((new.pos):ncol(tnt.data))[-(col.id-new.pos+1)])]
