@@ -12,10 +12,11 @@ writeDNM <- function(dnm,rtf){
         gene = gsub("'","",dnm[i,]$Gene.Name)
         addHeader(rtf,gene,subtitle=dnm[i,]$Variant.ID,font.size=14)
         startParagraph(rtf)
-        addText(rtf,paste0("This is a ",dnm[i,]$Denovo.Flag," ",dnm[i,]$GT," ",gsub("_"," ",tolower(dnm[i,]$Effect))," variant in ",gene,". "))
-        if((dnm[i,]$Ctrl.AF == 0 | is.na(dnm[i,]$Ctrl.AF)) & (dnm[i,]$Evs.All.Maf == 0 | is.na(dnm[i,]$Evs.All.Maf)) & (dnm[i,]$ExAC.global.af == 0 | is.na(dnm[i,]$ExAC.global.af)) & (dnm[i,]$gnomAD.Exome.global_AF == 0 | is.na(dnm[i,]$gnomAD.Exome.global_AF))){
+        addText(rtf,paste0("This is a ",dnm[i,]$Denovo.Flag," ",dnm[i,]$GT," ",gsub("_"," ",tolower(dnm[i,]$Effect))," in ",gene,". "))
+        if((dnm[i,]$Ctrl.AF == 0 | is.na(dnm[i,]$Ctrl.AF)) & (dnm[i,]$Evs.All.Maf == 0 | is.na(dnm[i,]$Evs.All.Maf)) & (dnm[i,]$ExAC.global.af == 0 | is.na(dnm[i,]$ExAC.global.af)) & (dnm[i,]$gnomAD.Exome.global_AF == 0 | is.na(dnm[i,]$gnomAD.Exome.global_AF)) & (dnm[i,]$gnomAD.Genome.global_AF == 0 | is.na(dnm[i,]$gnomAD.Genome.global_AF))){
             addText(rtf,"This variant is absent from internal and external control samples. ")}
-        else{addText(rtf,paste0("This variant has a control AF of ",dnm[i,]$Ctrl.AF," in IGM controls, ",dnm[i,]$Evs.All.Maf," in EVS, ",dnm[i,]$ExAC.global.af," in ExAC, and ",dnm[i,]$gnomAD.Exome.global_AF," in gnomAD. "))}
+        else{addText(rtf,paste0("This variant has a control AF of ",dnm[i,]$Ctrl.AF," in IGM controls, ",dnm[i,]$Evs.All.Maf," in EVS, ",dnm[i,]$ExAC.global.af," in ExAC, ",dnm[i,]$gnomAD.Exome.global_AF," in gnomAD, and ",dnm[i,]$gnomAD.Genome.global_AF," in gnomAD Genome. " ))
+        addText(rtf,paste0("This variant has a quality filter of ",dnm[i,]$gnomAD.Exome.FILTER," in gnomAD, and a quality filter of ",dnm[i,]$gnomAD.Genome.FILTER," in gnomAD Genome. "))}
         if(dnm[i,]$Effect == "missense_variant"){addText(rtf,paste0("It is a ",gsub("_"," ",dnm[i,]$Polyphen.Humvar.Prediction)," missense variant with a PolyPhen2 score of ",dnm[i,]$Polyphen.Humvar.Score,". "))}
         adj=" ";if(!is.na(dnm[i,]$X0.05._anypopn_RVIS.tile.ExAC.) & as.vector(dnm[i,]$X0.05._anypopn_RVIS.tile.ExAC.) <= 25){adj="n in"}
         addText(rtf,paste0(gene," is a",adj,"tolerant gene with an RVIS score of ",signif(as.double(as.vector(dnm[i,]$X0.05._anypopn_RVIS.tile.ExAC.)),digits=2),". "))
@@ -27,7 +28,7 @@ writeDNM <- function(dnm,rtf){
            addText(rtf,paste0(gene," is an OMIM disease gene associated with ",gsub(" \\|",", and", dnm[i,]$OMIM.Disease),adj,". "))}
         else if(!is.na(dnm[i,]$MGI.Essential) & dnm[i,]$MGI.Essential == 1){addText(rtf,paste0(gene," is an essential gene. "))}
         if(!is.na(dnm[i,]$ClinVar.ClinSig)){
-           addText(rtf,paste0("This variant is listed as ",tolower(dnm[i,]$ClinVar.ClinSig)," in ClinVar for ",dnm[i,]$ClinVar.Disease,". "))}
+           addText(rtf,paste0("This variant is listed as ",tolower(dnm[i,]$ClinVar.ClinSig)," in ClinVar for ",dnm[i,]$ClinVar.DiseaseName,". "))}
         if(!is.na(dnm[i,]$HGMD.Class)){
             addText(rtf,paste0("This variant is listed as ",dnm[i,]$HGMD.Class," in HGMD for ",dnm[i,]$HGMD.Disease,". "))}
         if(grepl("0", dnm[i,]$X.Transcripts)){
@@ -53,7 +54,7 @@ writeCHET <- function(chet,rtf){
         gene = gsub("'","",chet[i,]$Gene.Name.1)
         addHeader(rtf,gene,paste0(subtitle=chet[i,]$Variant.ID.1," , ",subtitle=chet[i,]$Variant.ID.2),font.size=14)
         startParagraph(rtf)
-        addText(rtf,paste0("These are ",chet[i,]$Comp.Het.Flag," variants in ",gene,". The first is a ",gsub("_"," ",tolower(chet[i,]$Effect.1))," and the second is a ",gsub("_"," ",tolower(chet[i,]$Effect.2)), " variant. "))
+        addText(rtf,paste0("These are ",chet[i,]$Comp.Het.Flag," variants in ",gene,". The first is a ",gsub("_"," ",tolower(chet[i,]$Effect.1))," and the second is a ",gsub("_"," ",tolower(chet[i,]$Effect.2)), ". "))
         adj=" ";if(!is.na(chet[i,]$X0.05._anypopn_RVIS.tile.ExAC..1) & as.vector(chet[i,]$X0.05._anypopn_RVIS.tile.ExAC..1) <= 25){adj="n in"}
         addText(rtf,paste0(gene," is a",adj,"tolerant gene with an RVIS score of ",signif(as.double(as.vector(chet[i,]$X0.05._anypopn_RVIS.tile.ExAC..1)),digits=2),". "))
         if(!is.na(chet[i,]$LoF.pLI.ExAC..1) & as.vector(chet[i,]$LoF.pLI.ExAC..1) >= .9){addText(rtf,paste0(gene," is LoF intolerant gene with a PLI score of ",signif(as.double(as.vector(chet[i,]$LoF.pLI.ExAC..1)),digits=2),". "))}
@@ -65,14 +66,16 @@ writeCHET <- function(chet,rtf){
         addText(rtf,"\n")
         
 #First variant
-        if((chet[i,]$Ctrl.AF.1 == 0 | is.na(chet[i,]$Ctrl.AF.1)) & (chet[i,]$Evs.All.Maf.1 == 0 | is.na(chet[i,]$Evs.All.Maf.1)) & (chet[i,]$ExAC.global.af.1 == 0 | is.na(chet[i,]$ExAC.global.af.1)) & (chet[i,]$gnomAD.Exome.global_AF.1 == 0 | is.na(chet[i,]$gnomAD.Exome.global_AF.1))){
+        if((chet[i,]$Ctrl.AF.1 == 0 | is.na(chet[i,]$Ctrl.AF.1)) & (chet[i,]$Evs.All.Maf.1 == 0 | is.na(chet[i,]$Evs.All.Maf.1)) & (chet[i,]$ExAC.global.af.1 == 0 | is.na(chet[i,]$ExAC.global.af.1)) & (chet[i,]$gnomAD.Exome.global_AF.1 == 0 | is.na(chet[i,]$gnomAD.Exome.global_AF.1)) & (chet[i,]$gnomAD.Genome.global_AF.1 == 0 | is.na(chet[i,]$gnomAD.Genome.global_AF.1))){
             addText(rtf,"The first variant is absent from internal and external control samples. ")}
-        else{addText(rtf,paste0("The first variant has a control AF of ",chet[i,]$Ctrl.AF.1," in IGM controls, ",chet[i,]$Evs.All.Maf.1," in EVS, ",chet[i,]$ExAC.global.af.1," in ExAC, "),chet[i,]$gnomAD.Exome.global_AF.1," in gnomAD. ")}
+        else{addText(rtf,paste0("The first variant has a control AF of ",chet[i,]$Ctrl.AF.1," in IGM controls, ",chet[i,]$Evs.All.Maf.1," in EVS, ",chet[i,]$ExAC.global.af.1," in ExAC, ",chet[i,]$gnomAD.Exome.global_AF.1," in gnomAD, and "),chet[i,]$gnomAD.Genome.global_AF.1," in gnomAD Genome. ")
+        addText(rtf,paste0("This variant has a quality filter of ",chet[i,]$gnomAD.Exome.FILTER.1," in gnomAD, and a quality filter of ",chet[i,]$gnomAD.Genome.FILTER.1," in gnomAD Genome. "))}
+        addText(rtf,paste0("This variant is ",chet[i,]$GT..mother..1," in Mom, and ",chet[i,]$GT..father..1," in Dad. "))
         if(chet[i,]$Effect.1 == "missense_variant"){addText(rtf,paste0("It is a ",gsub("_"," ",chet[i,]$Polyphen.Humvar.Prediction.1)," missense variant with a PolyPhen2 score of ",chet[i,]$Polyphen.Humvar.Score.1,". "))}
         if(is.na(chet[i,]$Gerp.RS.Score.1)){adj=" not"}else{adj=" very strongly";if(as.vector(chet[i,]$Gerp.RS.Score.1)<5){adj=" strongly"};if(as.vector(chet[i,]$Gerp.RS.Score.1)<4){adj=""};if(as.vector(chet[i,]$Gerp.RS.Score.1)<2){adj=" weakly"};if(as.vector(chet[i,]$Gerp.RS.Score.1)<0){adj=" not"}}
         addText(rtf,paste0("This site is",adj," conserved with a GERP++ RS score of ",chet[i,]$Gerp.RS.Score.1,". "))
         if(!is.na(chet[i,]$ClinVar.ClinSig.1)){
-           addText(rtf,paste0("This variant is listed as ",tolower(chet[i,]$ClinVar.ClinSig.1)," in ClinVar for",chet[i,]$ClinVar.Disease.1,". "))}
+           addText(rtf,paste0("This variant is listed as ",tolower(chet[i,]$ClinVar.ClinSig.1)," in ClinVar for",chet[i,]$ClinVar.DiseaseName.1,". "))}
         if(!is.na(chet[i,]$HGMD.Class.1)){
             addText(rtf,paste0("This variant is listed as ",chet[i,]$HGMD.Class.1," in HGMD for ",chet[i,]$HGMD.Disease.1,". "))}
         
@@ -84,18 +87,18 @@ writeCHET <- function(chet,rtf){
             addText(rtf,paste0("This variant is only covered in ",dnm[i,]$ExAC.Sample.Covered.10x," samples in ExAC.  "))}
         if(chet[i,]$Percent.Alt.Read.Binomial.P.1 < 0.05){
             addText(rtf,paste0("This variant appears to mosaic with a binomial p-value of ",chet[i,]$Percent.Alt.Read.Binomial.P.1,".  "))} 
-        if(!is.null(chet[i,]$gnomAD.Exome.filter.1)){
-            addText(rtf,paste0("This variant is marked as a ",chet[i,]$gnomAD.Exome.filter.1," in gnomAD. "))}
         #second variant
         addText(rtf,"\n")
-        if((chet[i,]$Ctrl.AF.2 == 0 | is.na(chet[i,]$Ctrl.AF.2)) & (chet[i,]$Evs.All.Maf.2 == 0 | is.na(chet[i,]$Evs.All.Maf.2)) & (chet[i,]$ExAC.global.af.2 == 0 | is.na(chet[i,]$ExAC.global.af.2)) & (chet[i,]$gnomAD.Exome.global_AF.2 == 0 | is.na(chet[i,]$gnomAD.Exome.global_AF.2))){
+        if((chet[i,]$Ctrl.AF.2 == 0 | is.na(chet[i,]$Ctrl.AF.2)) & (chet[i,]$Evs.All.Maf.2 == 0 | is.na(chet[i,]$Evs.All.Maf.2)) & (chet[i,]$ExAC.global.af.2 == 0 | is.na(chet[i,]$ExAC.global.af.2)) & (chet[i,]$gnomAD.Exome.global_AF.2 == 0 | is.na(chet[i,]$gnomAD.Exome.global_AF.2)) & (chet[i,]$gnomAD.Genome.global_AF.2 == 0 | is.na(chet[i,]$gnomAD.Genome.global_AF.2))){
             addText(rtf,"The second variant is absent from internal and external control samples. ")}
-        else{addText(rtf,paste0("The second variant has a control AF of ",chet[i,]$Ctrl.AF.2," in IGM controls, ",chet[i,]$Evs.All.Maf.2," in EVS, ",chet[i,]$ExAC.global.af.2," in ExAC, ",chet[i,]$gnomAD.Exome.global_AF.2," in gnomAD. "))}
+        else{addText(rtf,paste0("The second variant has a control AF of ",chet[i,]$Ctrl.AF.2," in IGM controls, ",chet[i,]$Evs.All.Maf.2," in EVS, ",chet[i,]$ExAC.global.af.2," in ExAC, ",chet[i,]$gnomAD.Exome.global_AF.2," in gnomAD, ",chet[i,]$gnomAD.Genome.global_AF.2," in gnomAD Genome. "))
+        addText(rtf,paste0("This variant has a quality filter of ",chet[i,]$gnomAD.Exome.FILTER.2," in gnomAD, and a quality filter of ",chet[i,]$gnomAD.Genome.FILTER.2," in gnomAD Genome. "))}
+        addText(rtf,paste0("This variant is ",chet[i,]$GT..mother..2," in Mom, and ",chet[i,]$GT..father..2," in Dad. "))
         if(chet[i,]$Effect.2 == "missense_variant"){addText(rtf,paste0("It is a ",gsub("_"," ",chet[i,]$Polyphen.Humvar.Prediction.2)," missense variant with a PolyPhen2 score of ",chet[i,]$Polyphen.Humvar.Score.2,". "))}
         if(is.na(chet[i,]$Gerp.RS.Score.2)){adj=" not"}else{adj=" very strongly";if(as.vector(chet[i,]$Gerp.RS.Score.2)<5){adj=" strongly"};if(as.vector(chet[i,]$Gerp.RS.Score.2)<4){adj=""};if(as.vector(chet[i,]$Gerp.RS.Score.2)<2){adj=" weakly"};if(as.vector(chet[i,]$Gerp.RS.Score.2)<0){adj=" not"}}
         addText(rtf,paste0("This site is",adj," conserved with a GERP++ RS score of ",chet[i,]$Gerp.RS.Score.2,". "))
         if(!is.na(chet[i,]$ClinVar.ClinSig.2)){
-           addText(rtf,paste0("This variant is listed as ",tolower(chet[i,]$ClinVar.ClinSig.2)," in ClinVar for ",chet[i,]$ClinVar.Disease.2,". "))}
+           addText(rtf,paste0("This variant is listed as ",tolower(chet[i,]$ClinVar.ClinSig.2)," in ClinVar for ",chet[i,]$ClinVar.DiseaseName.2,". "))}
         if(!is.na(chet[i,]$HGMD.Class.2)){
             addText(rtf,paste0("This variant is listed as ",chet[i,]$HGMD.Class.2," in HGMD for ",chet[i,]$HGMD.Disease.2,". "))}
         
@@ -107,8 +110,6 @@ writeCHET <- function(chet,rtf){
             addText(rtf,paste0("This variant is only covered in ",dnm[i,]$ExAC.Sample.Covered.10x," samples in ExAC.  "))}
         if(chet[i,]$Percent.Alt.Read.Binomial.P.2 < 0.05){
             addText(rtf,paste0("This variant appears to mosaic with a binomial p-value of ",chet[i,]$Percent.Alt.Read.Binomial.P.2,".  "))} 
-        if(!is.null(chet[i,]$gnomAD.Exome.filter.2)){
-            addText(rtf,paste0("This variant is marked as a ",chet[i,]$gnomAD.Exome.filter.2," in gnomAD. "))}
         addText(rtf,"\n")
         addText(rtf,"\n")
         endParagraph(rtf)
