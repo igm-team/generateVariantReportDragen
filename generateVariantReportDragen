@@ -219,6 +219,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$dnm," --append_
 dnm.data = read.csv(paste0(opt$dnm,".vep"),na.strings="NA")
 dnm.data <- cbind(dnm.data, gsub("'","",dnm.data$Gene.Name) %in% MGIe$Gene_symbol)
 colnames(dnm.data)[dim(dnm.data)[2]] <- "MGI.Essential"
+dnm.data$Gene.Name = gsub("'","",dnm.data$Gene.Name)
 dnm.data <- merge(dnm.data, all_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
 dnm.data <- cbind(dnm.data, paste0(dnm.data$Variant.ID,"\n",dnm.data$Denovo.Flag,"\n",dnm.data$HGVSc,"\n",dnm.data$HGVSp,"\n",dnm.data$DP,"\n",dnm.data$Percent.Alt.Read,"\n",dnm.data$GQ))
 colnames(dnm.data)[dim(dnm.data)[2]] <- "PGM.Info"
@@ -283,6 +284,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$cmphet," --appe
 chet.data = read.csv(paste0(opt$cmphet,".vep"),na.strings="NA") 
 chet.data <- cbind(chet.data, gsub("'","",chet.data$Gene.Name...1.) %in% MGIe$Gene_symbol)
 colnames(chet.data)[dim(chet.data)[2]] <- "MGI.Essential"
+chet.data$Gene.Name...1. = gsub("'","",chet.data$Gene.Name...1.)
 chet.data <- merge(chet.data, all_counts, by.x = "Gene.Name...1.", by.y = "Gene", all.x = T)
 chet.data <- cbind(chet.data, paste0(chet.data$Variant.ID...1.,"\n",chet.data$Comp.Het.Flag,"\n",chet.data$HGVSc...1.,"\n",chet.data$HGVSp...1.,"\n",chet.data$DP...1.,"\n",chet.data$Percent.Alt.Read...1.,"\n",chet.data$GQ...1.)) #,chet.data$GQ...1.))
 colnames(chet.data)[dim(chet.data)[2]] <- "PGM.Info.1"
@@ -330,6 +332,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$ptm," --append_
 ptm.data = read.csv(paste0(opt$ptm,".vep"),na.strings="NA")
 ptm.data <- cbind(ptm.data, gsub("'","",ptm.data$Gene.Name) %in% MGIe$Gene_symbol)
 colnames(ptm.data)[dim(ptm.data)[2]] <- "MGI.Essential"
+ptm.data$Gene.Name = gsub("'","",ptm.data$Gene.Name)
 ptm.data <- merge(ptm.data, all_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
 colnames(ptm.data)[dim(ptm.data)[2]] <- "PGM.Info"
 col.id <- grep("Sample.Name",colnames(ptm.data))
@@ -350,6 +353,7 @@ if(!opt$noVEP){system(paste0(scriptPath,"/append_vep.py -i ",opt$tnt," --append_
 tnt.data = read.csv(paste0(opt$tnt,".vep"),na.strings="NA")
 tnt.data <- cbind(tnt.data, gsub("'","",tnt.data$Gene.Name) %in% MGIe$Gene_symbol)
 colnames(tnt.data)[dim(tnt.data)[2]] <- "MGI.Essential"
+tnt.data$Gene.Name = gsub("'","",tnt.data$Gene.Name)
 tnt.data <- merge(tnt.data, all_counts, by.x = "Gene.Name", by.y = "Gene", all.x = T)
 tnt.data <- cbind(tnt.data, paste0(tnt.data$Variant.ID,"\n",tnt.data$Denovo.Flag,"\n",tnt.data$HGVSc,"\n",tnt.data$HGVSp,"\n",tnt.data$DP,"\n",tnt.data$Percent.Alt.Read,"\n",tnt.data$GQ))
 colnames(tnt.data)[dim(tnt.data)[2]] <- "PGM.Info"
